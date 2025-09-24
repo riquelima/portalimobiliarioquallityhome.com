@@ -228,43 +228,60 @@ const App: React.FC = () => {
     console.time('fetchAllData');
 
     try {
-        let query = supabase
+        // Step 1: Fetch properties and their media
+        let propertiesQuery = supabase
             .from('imoveis')
-            .select(`
-                *,
-                midias_imovel ( url, tipo ),
-                perfis:anunciante_id ( id, nome_completo, telefone, url_foto_perfil )
-            `);
+            .select('*, midias_imovel ( url, tipo )');
 
-        // Apply filter: active properties for everyone, plus own properties for logged-in users.
         if (currentUser) {
-            query = query.or(`status.eq.ativo,anunciante_id.eq.${currentUser.id}`);
+            propertiesQuery = propertiesQuery.or(`status.eq.ativo,anunciante_id.eq.${currentUser.id}`);
         } else {
-            query = query.eq('status', 'ativo');
+            propertiesQuery = propertiesQuery.eq('status', 'ativo');
         }
 
-        const { data: propertiesData, error } = await query;
-        if (error) throw error;
+        const { data: propertiesData, error: propertiesError } = await propertiesQuery;
+        if (propertiesError) throw propertiesError;
 
-        // The query is now unified, so no de-duplication is needed.
         const uniquePropertiesData = propertiesData || [];
 
-        const adaptedProperties = uniquePropertiesData.map((db:any): Property => ({
-          ...db,
-          title: db.titulo,
-          address: db.endereco_completo,
-          bedrooms: db.quartos,
-          bathrooms: db.banheiros,
-          area: db.area_bruta,
-          lat: db.latitude,
-          lng: db.longitude,
-          price: db.preco,
-          description: db.descricao,
-          images: (db.midias_imovel || []).filter((m:any)=>m.tipo==='imagem').map((m:any)=>m.url),
-          videos: (db.midias_imovel || []).filter((m:any)=>m.tipo==='video').map((m:any)=>m.url),
-          owner: db.perfis ? { ...db.perfis, phone: db.perfis.telefone } : undefined,
-          midias_imovel: db.midias_imovel || [],
-        }));
+        // Step 2: Extract unique advertiser IDs
+        const advertiserIds = [...new Set(uniquePropertiesData.map(p => p.anunciante_id).filter(id => id))];
+
+        // Step 3: Fetch profiles for the advertisers
+        const profilesMap = new Map<string, Profile>();
+        if (advertiserIds.length > 0) {
+            const { data: profilesData, error: profilesError } = await supabase
+                .from('perfis')
+                .select('id, nome_completo, telefone, url_foto_perfil')
+                .in('id', advertiserIds);
+            
+            if (profilesError) {
+                console.error('Could not fetch some profiles, continuing without them.', profilesError);
+            } else if (profilesData) {
+                profilesData.forEach(p => profilesMap.set(p.id, p as Profile));
+            }
+        }
+
+        // Step 4: Combine properties with their profiles
+        const adaptedProperties = uniquePropertiesData.map((db:any): Property => {
+            const ownerProfile = db.anunciante_id ? profilesMap.get(db.anunciante_id) : undefined;
+            return {
+              ...db,
+              title: db.titulo,
+              address: db.endereco_completo,
+              bedrooms: db.quartos,
+              bathrooms: db.banheiros,
+              area: db.area_bruta,
+              lat: db.latitude,
+              lng: db.longitude,
+              price: db.preco,
+              description: db.descricao,
+              images: (db.midias_imovel || []).filter((m:any)=>m.tipo==='imagem').map((m:any)=>m.url),
+              videos: (db.midias_imovel || []).filter((m:any)=>m.tipo==='video').map((m:any)=>m.url),
+              owner: ownerProfile ? { ...ownerProfile, phone: ownerProfile.telefone } : undefined,
+              midias_imovel: db.midias_imovel || [],
+            };
+        });
 
         setProperties(adaptedProperties);
         setMyAds(currentUser ? adaptedProperties.filter(p => p.anunciante_id === currentUser.id) : []);
