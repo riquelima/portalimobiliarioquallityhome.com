@@ -581,27 +581,39 @@ const App: React.FC = () => {
   };
 
   const handleAddProperty = useCallback(async (newProperty: Property) => {
-    showModal({
-        type: 'success',
-        title: t('systemModal.successTitle'),
-        message: t('confirmationModal.message'),
-    });
+    // Navigate home first to ensure a smooth transition.
     navigateHome();
-    if (user) {
-        fetchAllData(user);
-    }
+
+    // Use a short timeout to allow the navigation render to kick in before
+    // showing the modal and fetching data. This prevents potential race conditions
+    // on slower devices that could lead to a blank screen.
+    setTimeout(() => {
+        showModal({
+            type: 'success',
+            title: t('systemModal.successTitle'),
+            message: t('confirmationModal.message'),
+        });
+        if (user) {
+            fetchAllData(user);
+        }
+    }, 100);
   }, [user, fetchAllData, t, showModal, navigateHome]);
 
   const handleUpdateProperty = useCallback(async () => {
-    showModal({
-        type: 'success',
-        title: t('systemModal.successTitle'),
-        message: t('systemModal.editSuccessMessage'),
-    });
+    // Navigate home first for a smoother user experience.
     navigateHome();
-    if (user) {
-        fetchAllData(user);
-    }
+    
+    // Defer the modal and data fetch to prevent render race conditions.
+    setTimeout(() => {
+        showModal({
+            type: 'success',
+            title: t('systemModal.successTitle'),
+            message: t('systemModal.editSuccessMessage'),
+        });
+        if (user) {
+            fetchAllData(user);
+        }
+    }, 100);
   }, [user, fetchAllData, t, showModal, navigateHome]);
 
   const handlePublishError = useCallback((message: string) => {

@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Header from './Header';
 import PropertyListings from './PropertyListings';
 import type { Property, User, Profile } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import SearchIcon from './icons/SearchIcon';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 
 interface AllListingsPageProps {
   onBack: () => void;
@@ -31,19 +30,35 @@ interface AllListingsPageProps {
   navigateHome: () => void;
 }
 
+const GOOGLE_MAPS_API_KEY = 'AIzaSyDukeY7JJI9UkHIFbsCZOrjPDRukqvUOfA'; // User provided API key
+
+const containerStyle = {
+  width: '100%',
+  height: '100%'
+};
+
+const libraries: ('drawing' | 'places' | 'visualization')[] = ['places'];
+
 const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSearchQuery, setActiveSearchQuery] = useState('');
   
-  const [mapCenter, setMapCenter] = useState<[number, number]>([-12.9777, -38.5016]); // Default to Salvador
+  const [mapCenter, setMapCenter] = useState<{lat: number, lng: number}>({lat: -12.9777, lng: -38.5016}); // Default to Salvador
   const [isLoadingGeo, setIsLoadingGeo] = useState(true);
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+
+  const { isLoaded, loadError } = useJsApiLoader({
+    id: 'google-map-script-all-listings',
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    libraries,
+  });
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
         (position) => {
             const { latitude, longitude } = position.coords;
-            setMapCenter([latitude, longitude]);
+            setMapCenter({lat: latitude, lng: longitude});
             setIsLoadingGeo(false);
         },
         (error) => {
@@ -69,6 +84,14 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
           p.address.toLowerCase().includes(activeSearchQuery.toLowerCase())
         : true;
   });
+
+  const onMarkerClick = useCallback((property: Property) => {
+    setSelectedProperty(property);
+  }, []);
+
+  const onInfoWindowClose = useCallback(() => {
+    setSelectedProperty(null);
+  }, []);
 
   return (
     <div className="bg-brand-light-gray min-h-screen flex flex-col">
@@ -104,38 +127,53 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
         
         <div className="container mx-auto px-4 sm:px-6 mt-8">
             <div className="h-[400px] md:h-[500px] w-full mb-8 rounded-lg overflow-hidden shadow-md relative z-0">
-                {isLoadingGeo ? (
+                {isLoadingGeo || !isLoaded ? (
                     <div className="w-full h-full bg-gray-200 flex items-center justify-center animate-pulse">
-                        <p className="text-brand-gray">{t('map.loading')}</p>
+                        <p className="text-brand-gray">{loadError ? 'Error loading map' : t('map.loading')}</p>
                     </div>
                 ) : (
-                    <MapContainer center={mapCenter} zoom={13} style={{ height: '100%', width: '100%' }} scrollWheelZoom={true}>
-                        <TileLayer
-                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                        />
+                    <GoogleMap
+                        mapContainerStyle={containerStyle}
+                        center={mapCenter}
+                        zoom={13}
+                        options={{
+                            fullscreenControl: false,
+                            streetViewControl: false,
+                            mapTypeControl: false,
+                            zoomControl: true
+                        }}
+                    >
                         {filteredProperties.map(property => (
-                            <Marker key={property.id} position={[property.lat, property.lng]}>
-                                <Popup>
-                                    <div className="w-48">
-                                         <img 
-                                            src={property.images?.[0] || 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'} 
-                                            alt={property.title}
-                                            className="w-full h-24 object-cover rounded-md mb-2"
-                                        />
-                                        <h3 className="font-bold text-sm mb-1 truncate">{property.title}</h3>
-                                        <p className="text-xs text-brand-gray mb-2 truncate">{property.address}</p>
-                                        <button 
-                                            onClick={() => props.onViewDetails(property.id)}
-                                            className="w-full bg-brand-red text-white text-xs font-bold py-1 px-2 rounded hover:opacity-90"
-                                        >
-                                            {t('propertyCard.details')}
-                                        </button>
-                                    </div>
-                                </Popup>
-                            </Marker>
+                            <Marker 
+                                key={property.id} 
+                                position={{ lat: property.lat, lng: property.lng }}
+                                onClick={() => onMarkerClick(property)}
+                            />
                         ))}
-                    </MapContainer>
+
+                        {selectedProperty && (
+                            <InfoWindow
+                                position={{ lat: selectedProperty.lat, lng: selectedProperty.lng }}
+                                onCloseClick={onInfoWindowClose}
+                            >
+                                <div className="w-48">
+                                    <img 
+                                        src={selectedProperty.images?.[0] || 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'} 
+                                        alt={selectedProperty.title}
+                                        className="w-full h-24 object-cover rounded-md mb-2"
+                                    />
+                                    <h3 className="font-bold text-sm mb-1 truncate">{selectedProperty.title}</h3>
+                                    <p className="text-xs text-brand-gray mb-2 truncate">{selectedProperty.address}</p>
+                                    <button 
+                                        onClick={() => props.onViewDetails(selectedProperty.id)}
+                                        className="w-full bg-brand-red text-white text-xs font-bold py-1 px-2 rounded hover:opacity-90"
+                                    >
+                                        {t('propertyCard.details')}
+                                    </button>
+                                </div>
+                            </InfoWindow>
+                        )}
+                    </GoogleMap>
                 )}
             </div>
         </div>
