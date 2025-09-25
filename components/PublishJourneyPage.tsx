@@ -1,4 +1,5 @@
 
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -51,47 +52,6 @@ interface PublishJourneyPageProps {
   navigateToDocumentsForSale: () => void;
   navigateHome: () => void;
   onAccessClick: () => void;
-}
-
-// Helper function for mock AI title generation
-const mockAITitleGeneration = (baseTitle: string): Promise<string> => {
-    return new Promise(resolve => {
-        setTimeout(() => {
-            if (!baseTitle) {
-                resolve("Título de Anúncio Incrível Gerado por IA");
-                return;
-            }
-            const enhancements = ["Oportunidade Única", "Seu Novo Lar dos Sonhos", "Localização Perfeita", "Viva com Estilo e Conforto", "Imperdível na Região"];
-            const randomEnhancement = enhancements[Math.floor(Math.random() * enhancements.length)];
-            resolve(`${baseTitle} - ${randomEnhancement}`);
-        }, 800);
-    });
-};
-
-// Helper function for mock AI description generation
-const mockAIDescriptionGeneration = (formData: any): Promise<string> => {
-     return new Promise(resolve => {
-        setTimeout(() => {
-            const { detailsPropertyType, grossArea, bedrooms, bathrooms, description, homeFeatures } = formData;
-            
-            let generatedText = `Descubra este incrível ${detailsPropertyType.toLowerCase()} com ${grossArea}m², ideal para quem busca conforto e praticidade. O imóvel conta com ${bedrooms} quarto(s) e ${bathrooms} banheiro(s), oferecendo o espaço perfeito para sua família.\n\n`;
-            
-            if (homeFeatures.includes('balcony')) {
-                generatedText += "Desfrute de momentos relaxantes na varanda, apreciando a vista da cidade. ";
-            }
-             if (homeFeatures.includes('suite')) {
-                generatedText += "A suíte principal é um verdadeiro refúgio de tranquilidade e privacidade. ";
-            }
-
-            if (description && description.trim()) {
-                generatedText += `\n${description.trim()}\n\n`;
-            }
-
-            generatedText += "Não perca a chance de conhecer seu novo lar. Agende uma visita! (Descrição de demonstração gerada por IA).";
-            
-            resolve(generatedText);
-        }, 1200);
-    });
 }
 
 const formatPrice = (price: number | null | undefined): string => {
@@ -176,6 +136,11 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         rentalConditions: [] as string[], petsAllowed: null as boolean | null,
         dailyRate: '', minStay: '1', maxGuests: '2', cleaningFee: '',
         availableDates: [] as string[],
+        // Land specific
+        topography: '',
+        zoning: '',
+        isWalled: null as boolean | null,
+        isGatedCommunity: null as boolean | null,
     });
 
     const [files, setFiles] = useState<MediaItem[]>([]);
@@ -249,6 +214,11 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                 maxGuests: String(propertyToEdit.maximo_hospedes || '2'),
                 cleaningFee: formatPrice(propertyToEdit.taxa_limpeza),
                 availableDates: propertyToEdit.datas_disponiveis || [],
+                 // Land specific
+                topography: propertyToEdit.topografia || '',
+                zoning: propertyToEdit.zoneamento || '',
+                isWalled: propertyToEdit.murado ?? null,
+                isGatedCommunity: propertyToEdit.em_condominio ?? null,
             });
             const existingMedia = (propertyToEdit.midias_imovel || []).map(m => ({ ...m, type: 'existing' as const }));
             setFiles(existingMedia);
@@ -320,9 +290,13 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                 newState.hasElevator = null;
                 newState.homeFeatures = [];
             } else if (prev.detailsPropertyType === 'Terreno') {
-                // If changing FROM Terreno, restore defaults
+                // If changing FROM Terreno, restore defaults and clear land-specific data
                 newState.bedrooms = 1;
                 newState.bathrooms = 1;
+                newState.topography = '';
+                newState.zoning = '';
+                newState.isWalled = null;
+                newState.isGatedCommunity = null;
             }
     
             return newState;
@@ -455,6 +429,11 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                 maximo_hospedes: formData.maxGuests ? Number(formData.maxGuests) : null,
                 taxa_limpeza: unformatCurrencyForSubmission(formData.cleaningFee),
                 datas_disponiveis: formData.availableDates,
+                // Land specific data
+                topografia: formData.detailsPropertyType === 'Terreno' ? formData.topography : null,
+                zoneamento: formData.detailsPropertyType === 'Terreno' ? formData.zoning : null,
+                murado: formData.detailsPropertyType === 'Terreno' ? formData.isWalled : null,
+                em_condominio: formData.detailsPropertyType === 'Terreno' ? formData.isGatedCommunity : null,
                 status: 'ativo'
             };
 
@@ -529,12 +508,6 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         if (!formData.title.trim()) return;
         setIsGeneratingTitle(true);
         try {
-            if (typeof process === 'undefined' || !process.env.API_KEY) {
-                console.warn("Chave de API do Gemini não configurada. Usando título simulado.");
-                const text = await mockAITitleGeneration(formData.title);
-                setFormData(prev => ({ ...prev, title: text }));
-                return;
-            }
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const prompt = t('publishJourney.detailsForm.aiTitlePrompt', { title: formData.title });
             
@@ -571,13 +544,6 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         `;
         
         try {
-            if (typeof process === 'undefined' || !process.env.API_KEY) {
-                console.warn("Chave de API do Gemini não configurada. Usando descrição simulada.");
-                const text = await mockAIDescriptionGeneration(formData);
-                setFormData(prev => ({ ...prev, description: text }));
-                return;
-            }
-
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const prompt = t('publishJourney.detailsForm.aiDescriptionPrompt', { details });
 
@@ -847,7 +813,11 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                     </div>
 
                                     {/* Characteristics */}
-                                    <h3 className="text-xl font-bold text-brand-navy mb-4 border-t pt-6">{t('publishJourney.detailsForm.apartmentCharacteristics')}</h3>
+                                    <h3 className="text-xl font-bold text-brand-navy mb-4 border-t pt-6">
+                                        {formData.detailsPropertyType === 'Terreno' ? t('publishJourney.detailsForm.landCharacteristics') : t('publishJourney.detailsForm.apartmentCharacteristics')}
+                                    </h3>
+                                    
+                                    {/* Common Fields */}
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                                         <div>
                                             <label htmlFor="detailsPropertyType" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.propertyType')}</label>
@@ -862,6 +832,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                             <input type="number" id="grossArea" name="grossArea" value={formData.grossArea} onChange={handleFormChange} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
                                         </div>
 
+                                        {/* Fields for NON-TERRENO */}
                                         {formData.detailsPropertyType !== 'Terreno' && (
                                             <>
                                                 <div>
@@ -893,9 +864,48 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                                 </div>
                                             </>
                                         )}
+                                        {/* Fields for TERRENO */}
+                                        {formData.detailsPropertyType === 'Terreno' && (
+                                            <>
+                                                <div>
+                                                    <label htmlFor="topography" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.topography')}</label>
+                                                    <select id="topography" name="topography" value={formData.topography} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red">
+                                                        <option value="">Selecione</option>
+                                                        <option value="plano">{t('publishJourney.detailsForm.flat')}</option>
+                                                        <option value="aclive">{t('publishJourney.detailsForm.uphill')}</option>
+                                                        <option value="declive">{t('publishJourney.detailsForm.downhill')}</option>
+                                                        <option value="irregular">{t('publishJourney.detailsForm.irregular')}</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label htmlFor="zoning" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.zoning')}</label>
+                                                    <select id="zoning" name="zoning" value={formData.zoning} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red">
+                                                        <option value="">Selecione</option>
+                                                        <option value="residencial">{t('publishJourney.detailsForm.residential')}</option>
+                                                        <option value="comercial">{t('publishJourney.detailsForm.commercial')}</option>
+                                                        <option value="misto">{t('publishJourney.detailsForm.mixedUse')}</option>
+                                                        <option value="industrial">{t('publishJourney.detailsForm.industrial')}</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.walled')}</p>
+                                                    <div className="flex gap-4">
+                                                        <label className="flex items-center"><input type="radio" name="isWalled" value="true" checked={formData.isWalled === true} onChange={handleRadioChange} className="mr-2"/>{t('publishJourney.detailsForm.yes')}</label>
+                                                        <label className="flex items-center"><input type="radio" name="isWalled" value="false" checked={formData.isWalled === false} onChange={handleRadioChange} className="mr-2"/>{t('publishJourney.detailsForm.no')}</label>
+                                                    </div>
+                                                </div>
+                                                <div className="sm:col-span-2">
+                                                    <p className="text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.gatedCommunity')}</p>
+                                                    <div className="flex gap-4">
+                                                        <label className="flex items-center"><input type="radio" name="isGatedCommunity" value="true" checked={formData.isGatedCommunity === true} onChange={handleRadioChange} className="mr-2"/>{t('publishJourney.detailsForm.yes')}</label>
+                                                        <label className="flex items-center"><input type="radio" name="isGatedCommunity" value="false" checked={formData.isGatedCommunity === false} onChange={handleRadioChange} className="mr-2"/>{t('publishJourney.detailsForm.no')}</label>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                     
-                                    {/* More Features */}
+                                    {/* More Features (NON-TERRENO) */}
                                     {formData.detailsPropertyType !== 'Terreno' && (
                                         <div className="mb-6">
                                             <h4 className="text-lg font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.otherHomeFeatures')}</h4>
@@ -910,18 +920,21 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                         </div>
                                     )}
 
-                                    <div className="mb-6">
-                                        <h4 className="text-lg font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.otherBuildingFeatures')}</h4>
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                             {['pool', 'greenArea', 'portaria24h', 'academia', 'salaoDeFestas', 'churrasqueira', 'parqueInfantil', 'quadraEsportiva', 'sauna', 'espacoGourmet'].map(feature => (
-                                                <label key={feature} className="flex items-center">
-                                                    <input type="checkbox" value={feature} checked={formData.buildingFeatures.includes(feature)} onChange={(e) => handleCheckboxChange(e, 'buildingFeatures')} className="mr-2 h-4 w-4 rounded border-gray-300 text-brand-red focus:ring-brand-red" />
-                                                    <span className="text-sm">{t(`publishJourney.detailsForm.${feature}`)}</span>
-                                                </label>
-                                            ))}
+                                    {/* Condominium Features (NON-TERRENO or Gated Community TERRENO) */}
+                                    {(formData.detailsPropertyType !== 'Terreno' || formData.isGatedCommunity === true) && (
+                                        <div className="mb-6">
+                                            <h4 className="text-lg font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.otherBuildingFeatures')}</h4>
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                                {['pool', 'greenArea', 'portaria24h', 'academia', 'salaoDeFestas', 'churrasqueira', 'parqueInfantil', 'quadraEsportiva', 'sauna', 'espacoGourmet'].map(feature => (
+                                                    <label key={feature} className="flex items-center">
+                                                        <input type="checkbox" value={feature} checked={formData.buildingFeatures.includes(feature)} onChange={(e) => handleCheckboxChange(e, 'buildingFeatures')} className="mr-2 h-4 w-4 rounded border-gray-300 text-brand-red focus:ring-brand-red" />
+                                                        <span className="text-sm">{t(`publishJourney.detailsForm.${feature}`)}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
-                                    
+                                    )}
+
                                     {/* Description */}
                                     <div className="mb-4">
                                         <label htmlFor="description" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.adDescription')}</label>
@@ -944,6 +957,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                     </button>
                                 </div>
                             )}
+
 
                             {/* Step 3: Photos */}
                             {step === 3 && (

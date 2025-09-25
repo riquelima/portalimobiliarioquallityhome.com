@@ -77,6 +77,12 @@ export interface Property {
   datas_disponiveis?: string[]; // Array de datas no formato 'YYYY-MM-DD'
   // FIX: Added missing property 'area_util' used in PublishJourneyPage.tsx.
   area_util?: number;
+
+  // Novos campos para terrenos
+  topografia?: string;
+  zoneamento?: string;
+  murado?: boolean;
+  em_condominio?: boolean;
 }
 
 export interface Message {
