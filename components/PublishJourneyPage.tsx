@@ -1,5 +1,4 @@
 
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -203,6 +202,14 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         aluguel: 'rent',
         temporada: 'season'
     };
+    
+    const validateDetails = useCallback(() => {
+        if (formData.title.trim().length < 10) {
+            onPublishError(t('publishJourney.errors.titleTooShort'));
+            return false;
+        }
+        return true;
+    }, [formData.title, onPublishError, t]);
 
     useEffect(() => {
         if (propertyToEdit) {
@@ -364,6 +371,11 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
     };
 
     const handleSubmitJourney = async () => {
+        if (!validateDetails()) {
+            setStep(2);
+            return;
+        }
+
         if (!user) {
             onPublishError("Usuário não autenticado.");
             return;
@@ -753,7 +765,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                     <div className="mb-4">
                                         <label htmlFor="title" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.adTitle')}</label>
                                         <div className="relative">
-                                            <input type="text" id="title" name="title" value={formData.title} onChange={handleFormChange} placeholder={t('publishJourney.detailsForm.adTitlePlaceholder')} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red pr-28" />
+                                            <input type="text" id="title" name="title" value={formData.title} onChange={handleFormChange} placeholder={t('publishJourney.detailsForm.adTitlePlaceholder')} required minLength={10} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red pr-28" />
                                             <button 
                                                 type="button" 
                                                 onClick={generateAITitle} 
@@ -898,7 +910,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                         </div>
                                     </div>
 
-                                    <button onClick={() => setStep(3)} className="mt-6 w-full bg-brand-red text-white font-bold py-3 px-4 rounded-md hover:opacity-90 transition-opacity">
+                                    <button onClick={() => { if (validateDetails()) { setStep(3); } }} className="mt-6 w-full bg-brand-red text-white font-bold py-3 px-4 rounded-md hover:opacity-90 transition-opacity">
                                         {t('publishJourney.detailsForm.continueToPhotosButton')}
                                     </button>
                                 </div>

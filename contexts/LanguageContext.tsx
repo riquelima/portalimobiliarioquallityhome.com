@@ -175,6 +175,7 @@ const ptTranslations = {
     "title": "Publicar seu anúncio particular",
     "editTitle": "Editar seu anúncio",
     "adPublishedSuccess": "Anúncio publicado com sucesso!",
+    "errors": { "titleTooShort": "O título do anúncio deve ter pelo menos 10 caracteres." },
     "form": {
       "propertyType": {
         "label": "Escolha o tipo de imóvel"
@@ -656,6 +657,7 @@ const enTranslations = {
     "title": "Publish your private ad",
     "editTitle": "Edit your ad",
     "adPublishedSuccess": "Ad published successfully!",
+    "errors": { "titleTooShort": "The ad title must be at least 10 characters long." },
     "form": {
       "propertyType": {
         "label": "Choose the property type"
@@ -1137,6 +1139,7 @@ const esTranslations = {
     "title": "Publicar tu anuncio de particular",
     "editTitle": "Editar tu anuncio",
     "adPublishedSuccess": "¡Anuncio publicado con éxito!",
+    "errors": { "titleTooShort": "El título del anuncio debe tener al menos 10 caracteres." },
     "form": {
       "propertyType": {
         "label": "Elige el tipo de inmueble"
