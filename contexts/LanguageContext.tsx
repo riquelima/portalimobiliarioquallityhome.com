@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 
 // Translations are embedded directly to avoid module resolution issues.
 const ptTranslations = {
@@ -1503,7 +1503,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     setLanguage(lang);
   };
 
-  const t = (key: string, options?: { [key: string]: string | number }) => {
+  const t = useCallback((key: string, options?: { [key: string]: string | number }) => {
     const keys = key.split('.');
     let result: any = translations[language];
     for (const k of keys) {
@@ -1520,7 +1520,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
     
     return result || key;
-  };
+  }, [language]);
 
   return (
     <LanguageContext.Provider value={{ language, changeLanguage, t }}>
