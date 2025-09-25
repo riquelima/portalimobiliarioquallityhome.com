@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -21,6 +22,7 @@ import AIIcon from './icons/AIIcon';
 import SpinnerIcon from './icons/SpinnerIcon';
 import WarningIcon from './icons/WarningIcon';
 
+const GEMINI_API_KEY = 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk';
 
 type MediaItem = File | (Media & { type: 'existing' });
 
@@ -170,11 +172,11 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
     
     const validateDetails = useCallback(() => {
         if (formData.title.trim().length < 10) {
-            onPublishError(t('publishJourney.errors.titleTooShort'));
+            props.onRequestModal({ type: 'error', title: t('systemModal.errorTitle'), message: t('publishJourney.errors.titleTooShort') });
             return false;
         }
         return true;
-    }, [formData.title, onPublishError, t]);
+    }, [formData.title, props, t]);
 
     useEffect(() => {
         if (propertyToEdit) {
@@ -508,7 +510,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         if (!formData.title.trim()) return;
         setIsGeneratingTitle(true);
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
             const prompt = t('publishJourney.detailsForm.aiTitlePrompt', { title: formData.title });
             
             const response = await ai.models.generateContent({
@@ -522,11 +524,11 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             }
         } catch (error) {
             console.error("Erro ao gerar título com IA:", error);
-            onPublishError(t('publishJourney.detailsForm.aiTitleError'));
+            props.onRequestModal({ type: 'error', title: t('systemModal.errorTitle'), message: t('publishJourney.detailsForm.aiTitleError')});
         } finally {
             setIsGeneratingTitle(false);
         }
-    }, [formData.title, t, onPublishError]);
+    }, [formData.title, t, props]);
 
     // AI Description Generation
     const generateAIDescription = useCallback(async () => {
@@ -544,7 +546,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         `;
         
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
             const prompt = t('publishJourney.detailsForm.aiDescriptionPrompt', { details });
 
             const response = await ai.models.generateContent({
@@ -557,11 +559,11 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             }
         } catch (error) {
             console.error("Erro ao gerar descrição com IA:", error);
-            onPublishError(t('publishJourney.detailsForm.aiDescriptionError'));
+            props.onRequestModal({ type: 'error', title: t('systemModal.errorTitle'), message: t('publishJourney.detailsForm.aiDescriptionError')});
         } finally {
             setIsGeneratingDescription(false);
         }
-    }, [formData, t, onPublishError]);
+    }, [formData, t, props]);
 
     const handleAcceptLocation = () => {
         setIsLocationPermissionModalOpen(false);

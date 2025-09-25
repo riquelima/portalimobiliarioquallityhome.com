@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useRef, useEffect } from 'react';
 import SearchIcon from './icons/SearchIcon';
 import ChevronDownIcon from './icons/ChevronDownIcon';
@@ -7,6 +8,8 @@ import DrawIcon from './icons/DrawIcon';
 import GeoIcon from './icons/GeoIcon';
 import { GoogleGenAI } from '@google/genai';
 import { useLanguage } from '../contexts/LanguageContext';
+
+const GEMINI_API_KEY = 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk';
 
 interface HeroProps {
   onDrawOnMapClick: () => void;
@@ -35,7 +38,7 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
 
     const generateTitle = async () => {
       try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
         const prompt = t('hero.geminiPrompt');
         
         const response = await ai.models.generateContent({
