@@ -307,6 +307,27 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
     const handleNumberChange = (field: 'bedrooms' | 'bathrooms', delta: number) => {
         setFormData(prev => ({ ...prev, [field]: Math.max(0, prev[field] + delta) }));
     };
+
+    const handlePropertyTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => {
+            const newState = { ...prev, [name]: value };
+    
+            if (value === 'Terreno') {
+                newState.bedrooms = 0;
+                newState.bathrooms = 0;
+                newState.netArea = '';
+                newState.hasElevator = null;
+                newState.homeFeatures = [];
+            } else if (prev.detailsPropertyType === 'Terreno') {
+                // If changing FROM Terreno, restore defaults
+                newState.bedrooms = 1;
+                newState.bathrooms = 1;
+            }
+    
+            return newState;
+        });
+    };
     
     const handleAddressSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -830,7 +851,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                                         <div>
                                             <label htmlFor="detailsPropertyType" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.propertyType')}</label>
-                                            <select id="detailsPropertyType" name="detailsPropertyType" value={formData.detailsPropertyType} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red">
+                                            <select id="detailsPropertyType" name="detailsPropertyType" value={formData.detailsPropertyType} onChange={handlePropertyTypeChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red">
                                                 {propertyTypes.map(item => (
                                                      <option key={item.key} value={item.value}>{t(`publishJourney.detailsForm.${item.key}`)}</option>
                                                 ))}
@@ -840,47 +861,55 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
                                             <label htmlFor="grossArea" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.grossArea')}</label>
                                             <input type="number" id="grossArea" name="grossArea" value={formData.grossArea} onChange={handleFormChange} required className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
                                         </div>
-                                        <div>
-                                            <label htmlFor="netArea" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.netArea')}</label>
-                                            <input type="number" id="netArea" name="netArea" value={formData.netArea} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
-                                        </div>
-                                         <div>
-                                            <label className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.bedrooms')}</label>
-                                            <div className="flex items-center border border-gray-300 rounded-md">
-                                                <button type="button" onClick={() => handleNumberChange('bedrooms', -1)} className="p-2 text-brand-dark"><MinusIcon className="w-5 h-5"/></button>
-                                                <input type="number" name="bedrooms" value={formData.bedrooms} onChange={handleFormChange} className="w-full text-center border-l border-r px-2 py-1.5 focus:outline-none" />
-                                                <button type="button" onClick={() => handleNumberChange('bedrooms', 1)} className="p-2 text-brand-dark"><PlusIcon className="w-5 h-5"/></button>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.bathrooms')}</label>
-                                             <div className="flex items-center border border-gray-300 rounded-md">
-                                                <button type="button" onClick={() => handleNumberChange('bathrooms', -1)} className="p-2 text-brand-dark"><MinusIcon className="w-5 h-5"/></button>
-                                                <input type="number" name="bathrooms" value={formData.bathrooms} onChange={handleFormChange} className="w-full text-center border-l border-r px-2 py-1.5 focus:outline-none" />
-                                                <button type="button" onClick={() => handleNumberChange('bathrooms', 1)} className="p-2 text-brand-dark"><PlusIcon className="w-5 h-5"/></button>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.hasElevator')}</p>
-                                            <div className="flex gap-4">
-                                                <label className="flex items-center"><input type="radio" name="hasElevator" value="true" checked={formData.hasElevator === true} onChange={handleRadioChange} className="mr-2"/>{t('publishJourney.detailsForm.yes')}</label>
-                                                <label className="flex items-center"><input type="radio" name="hasElevator" value="false" checked={formData.hasElevator === false} onChange={handleRadioChange} className="mr-2"/>{t('publishJourney.detailsForm.no')}</label>
-                                            </div>
-                                        </div>
+
+                                        {formData.detailsPropertyType !== 'Terreno' && (
+                                            <>
+                                                <div>
+                                                    <label htmlFor="netArea" className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.netArea')}</label>
+                                                    <input type="number" id="netArea" name="netArea" value={formData.netArea} onChange={handleFormChange} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.bedrooms')}</label>
+                                                    <div className="flex items-center border border-gray-300 rounded-md">
+                                                        <button type="button" onClick={() => handleNumberChange('bedrooms', -1)} className="p-2 text-brand-dark"><MinusIcon className="w-5 h-5"/></button>
+                                                        <input type="number" name="bedrooms" value={formData.bedrooms} onChange={handleFormChange} className="w-full text-center border-l border-r px-2 py-1.5 focus:outline-none" />
+                                                        <button type="button" onClick={() => handleNumberChange('bedrooms', 1)} className="p-2 text-brand-dark"><PlusIcon className="w-5 h-5"/></button>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-brand-dark mb-1">{t('publishJourney.detailsForm.bathrooms')}</label>
+                                                    <div className="flex items-center border border-gray-300 rounded-md">
+                                                        <button type="button" onClick={() => handleNumberChange('bathrooms', -1)} className="p-2 text-brand-dark"><MinusIcon className="w-5 h-5"/></button>
+                                                        <input type="number" name="bathrooms" value={formData.bathrooms} onChange={handleFormChange} className="w-full text-center border-l border-r px-2 py-1.5 focus:outline-none" />
+                                                        <button type="button" onClick={() => handleNumberChange('bathrooms', 1)} className="p-2 text-brand-dark"><PlusIcon className="w-5 h-5"/></button>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-brand-dark mb-2">{t('publishJourney.detailsForm.hasElevator')}</p>
+                                                    <div className="flex gap-4">
+                                                        <label className="flex items-center"><input type="radio" name="hasElevator" value="true" checked={formData.hasElevator === true} onChange={handleRadioChange} className="mr-2"/>{t('publishJourney.detailsForm.yes')}</label>
+                                                        <label className="flex items-center"><input type="radio" name="hasElevator" value="false" checked={formData.hasElevator === false} onChange={handleRadioChange} className="mr-2"/>{t('publishJourney.detailsForm.no')}</label>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                     
                                     {/* More Features */}
-                                    <div className="mb-6">
-                                        <h4 className="text-lg font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.otherHomeFeatures')}</h4>
-                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                            {['builtInWardrobes', 'airConditioning', 'terrace', 'balcony', 'garage', 'mobiliado', 'cozinhaEquipada', 'suite', 'escritorio'].map(feature => (
-                                                <label key={feature} className="flex items-center">
-                                                    <input type="checkbox" value={feature} checked={formData.homeFeatures.includes(feature)} onChange={(e) => handleCheckboxChange(e, 'homeFeatures')} className="mr-2 h-4 w-4 rounded border-gray-300 text-brand-red focus:ring-brand-red" />
-                                                    <span className="text-sm">{t(`publishJourney.detailsForm.${feature}`)}</span>
-                                                </label>
-                                            ))}
+                                    {formData.detailsPropertyType !== 'Terreno' && (
+                                        <div className="mb-6">
+                                            <h4 className="text-lg font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.otherHomeFeatures')}</h4>
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                                {['builtInWardrobes', 'airConditioning', 'terrace', 'balcony', 'garage', 'mobiliado', 'cozinhaEquipada', 'suite', 'escritorio'].map(feature => (
+                                                    <label key={feature} className="flex items-center">
+                                                        <input type="checkbox" value={feature} checked={formData.homeFeatures.includes(feature)} onChange={(e) => handleCheckboxChange(e, 'homeFeatures')} className="mr-2 h-4 w-4 rounded border-gray-300 text-brand-red focus:ring-brand-red" />
+                                                        <span className="text-sm">{t(`publishJourney.detailsForm.${feature}`)}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
+
                                     <div className="mb-6">
                                         <h4 className="text-lg font-semibold text-brand-navy mb-3">{t('publishJourney.detailsForm.otherBuildingFeatures')}</h4>
                                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">

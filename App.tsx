@@ -228,10 +228,10 @@ const App: React.FC = () => {
     console.time('fetchAllData');
 
     try {
-        // Step 1: Fetch properties and their media
+        // Step 1: Fetch base properties
         let propertiesQuery = supabase
             .from('imoveis')
-            .select('*, midias_imovel ( url, tipo )');
+            .select('*');
 
         if (currentUser) {
             propertiesQuery = propertiesQuery.or(`status.eq.ativo,anunciante_id.eq.${currentUser.id}`);
@@ -242,29 +242,53 @@ const App: React.FC = () => {
         const { data: propertiesData, error: propertiesError } = await propertiesQuery;
         if (propertiesError) throw propertiesError;
 
-        const uniquePropertiesData = propertiesData || [];
-
-        // Step 2: Extract unique advertiser IDs
-        const advertiserIds = [...new Set(uniquePropertiesData.map(p => p.anunciante_id).filter(id => id))];
-
-        // Step 3: Fetch profiles for the advertisers
-        const profilesMap = new Map<string, Profile>();
-        if (advertiserIds.length > 0) {
-            const { data: profilesData, error: profilesError } = await supabase
-                .from('perfis')
-                .select('id, nome_completo, telefone, url_foto_perfil')
-                .in('id', advertiserIds);
-            
-            if (profilesError) {
-                console.error('Could not fetch some profiles, continuing without them.', profilesError);
-            } else if (profilesData) {
-                profilesData.forEach(p => profilesMap.set(p.id, p as Profile));
+        if (!propertiesData || propertiesData.length === 0) {
+            setProperties([]);
+            setMyAds([]);
+            // Reset user-specific data only if they exist
+            if (currentUser) {
+                setFavorites([]);
+                setChatSessions([]);
             }
+            return; // Exit early
         }
 
-        // Step 4: Combine properties with their profiles
-        const adaptedProperties = uniquePropertiesData.map((db:any): Property => {
+        const propertyIds = propertiesData.map(p => p.id);
+        const advertiserIds = [...new Set(propertiesData.map(p => p.anunciante_id).filter(id => id))];
+
+        // Step 2: Concurrently fetch related media and profiles
+        const [mediaResponse, profilesResponse] = await Promise.all([
+            supabase.from('midias_imovel').select('*').in('imovel_id', propertyIds),
+            advertiserIds.length > 0
+                ? supabase.from('perfis').select('id, nome_completo, telefone, url_foto_perfil').in('id', advertiserIds)
+                : Promise.resolve({ data: [], error: null })
+        ]);
+
+        const { data: mediaData, error: mediaError } = mediaResponse;
+        if (mediaError) console.error("Could not fetch media:", mediaError);
+        
+        const { data: profilesData, error: profilesError } = profilesResponse;
+        if (profilesError) console.error('Could not fetch profiles:', profilesError);
+
+        // Create lookup maps for efficient combination
+        const mediaMap = new Map<number, Media[]>();
+        if (mediaData) {
+            mediaData.forEach(media => {
+                if (!mediaMap.has(media.imovel_id)) mediaMap.set(media.imovel_id, []);
+                mediaMap.get(media.imovel_id)!.push(media as Media);
+            });
+        }
+        
+        const profilesMap = new Map<string, Profile>();
+        if (profilesData) {
+            profilesData.forEach(p => profilesMap.set(p.id, p as Profile));
+        }
+
+        // Step 3: Combine all data into the final Property array
+        const adaptedProperties = propertiesData.map((db: any): Property => {
             const ownerProfile = db.anunciante_id ? profilesMap.get(db.anunciante_id) : undefined;
+            const propertyMedia = mediaMap.get(db.id) || [];
+            
             return {
               ...db,
               title: db.titulo,
@@ -276,16 +300,17 @@ const App: React.FC = () => {
               lng: db.longitude,
               price: db.preco,
               description: db.descricao,
-              images: (db.midias_imovel || []).filter((m:any)=>m.tipo==='imagem').map((m:any)=>m.url),
-              videos: (db.midias_imovel || []).filter((m:any)=>m.tipo==='video').map((m:any)=>m.url),
+              images: propertyMedia.filter(m => m.tipo === 'imagem').map(m => m.url),
+              videos: propertyMedia.filter(m => m.tipo === 'video').map(m => m.url),
               owner: ownerProfile ? { ...ownerProfile, phone: ownerProfile.telefone } : undefined,
-              midias_imovel: db.midias_imovel || [],
+              midias_imovel: propertyMedia,
             };
         });
 
         setProperties(adaptedProperties);
         setMyAds(currentUser ? adaptedProperties.filter(p => p.anunciante_id === currentUser.id) : []);
 
+        // Step 4: Fetch user-specific data (favorites, chats)
         if (currentUser) {
             const { data: favoritesData, error: favoritesError } = await supabase
                 .from('favoritos_usuario')
