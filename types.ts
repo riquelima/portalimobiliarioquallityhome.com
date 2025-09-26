@@ -1,5 +1,6 @@
 
 
+
 import type { User } from '@supabase/supabase-js';
 
 export { User };
@@ -87,28 +88,20 @@ export interface Property {
 
 export interface Message {
   id: number | string;
-  sessao_id?: string;
-  remetente_id: string; // UUID of the sender profile
-  conteudo: string;
-  data_envio: string | Date;
-  // Legacy fields for UI compatibility
   senderId: string;
   text: string;
   timestamp: Date;
 }
 
 export interface ChatSession {
-  id: string; // UUID from sessoes_chat
+  id: string;
   imovel_id: number;
-  participantes: {
-    [key: string]: { // key is user UUID
+  participants: {
+    [key: string]: {
         id: string,
         nome_completo: string,
+        url_foto_perfil?: string;
     }
   };
-  mensagens: Message[];
-  // Legacy fields for UI compatibility
-  sessionId: string;
-  propertyId: number;
   messages: Message[];
 }

@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -325,16 +326,14 @@ const App: React.FC = () => {
 
             if (chatError) console.error('Error fetching chat sessions:', chatError);
             else if (chatData) {
-                const adaptedSessions = chatData.map((s: any) => {
+                const adaptedSessions: ChatSession[] = chatData.map((s: any) => {
                     const validParticipants = (s.participants || []).filter((p: any) => p && p.id);
                     const validMessages = (s.messages || []).filter((m: any) => m && m.id && m.data_envio);
 
                     return {
                         id: s.session_id,
-                        sessionId: s.session_id,
-                        propertyId: s.imovel_id,
                         imovel_id: s.imovel_id,
-                        participants: validParticipants.reduce((acc: any, p: any) => {
+                        participants: validParticipants.reduce((acc: { [key: string]: { id: string; nome_completo: string; } }, p: any) => {
                             acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
                             return acc;
                         }, {}),
@@ -343,15 +342,7 @@ const App: React.FC = () => {
                             senderId: m.remetente_id,
                             text: m.conteudo,
                             timestamp: new Date(m.data_envio),
-                            remetente_id: m.remetente_id,
-                            conteudo: m.conteudo,
-                            data_envio: m.data_envio,
-                        })),
-                        mensagens: validMessages,
-                        participantes: validParticipants.reduce((acc: any, p: any) => {
-                            acc[p.id] = { id: p.id, nome_completo: p.nome_completo };
-                            return acc;
-                        }, {}),
+                        })).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
                     };
                 });
                 setChatSessions(adaptedSessions);
@@ -504,14 +495,9 @@ const App: React.FC = () => {
             senderId: newMessage.remetente_id,
             text: newMessage.conteudo,
             timestamp: new Date(newMessage.data_envio),
-            remetente_id: newMessage.remetente_id,
-            conteudo: newMessage.conteudo,
-            data_envio: newMessage.data_envio,
           };
           
-          // Update both message arrays for compatibility
           targetSession.messages = [...targetSession.messages, adaptedMessage];
-          targetSession.mensagens = [...targetSession.mensagens, adaptedMessage];
           
           updatedSessions[sessionIndex] = targetSession;
   
@@ -856,7 +842,7 @@ const App: React.FC = () => {
         if (!user) { navigateHome(); return null; }
         return <ChatListPage
                   onBack={navigateHome}
-                  chatSessions={chatSessions.filter(s => s.participantes[user.id])}
+                  chatSessions={chatSessions.filter(s => s.participants[user.id])}
                   properties={properties}
                   onNavigateToChat={navigateToChat}
                   {...headerProps}
@@ -928,6 +914,11 @@ const App: React.FC = () => {
             <footer className="bg-brand-light-gray text-brand-gray py-8 text-center mt-20">
               <div className="container mx-auto">
                 <p>&copy; {new Date().getFullYear()} {t('footer.text')}</p>
+                <div className="mt-4">
+                  <a href="https://www.instagram.com/portalimobiliarioquallityhome/" target="_blank" rel="noopener noreferrer" aria-label="Siga-nos no Instagram" className="inline-block hover:opacity-75 transition-opacity">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3621/3621435.png" alt="Instagram" className="h-8 w-8" />
+                  </a>
+                </div>
               </div>
             </footer>
           </div>
