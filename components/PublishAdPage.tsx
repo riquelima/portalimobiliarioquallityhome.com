@@ -21,7 +21,7 @@ interface PublishAdPageProps {
   // FIX: Add onNavigateToMyAds prop to resolve typing error.
   onNavigateToMyAds: () => void;
   onNavigateToAllListings: () => void;
-  hasUnreadMessages: boolean;
+  unreadCount: number;
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
   navigateHome: () => void;

@@ -49,7 +49,7 @@ interface PublishJourneyPageProps {
   propertyToEdit?: Property | null;
   onRequestModal: (config: ModalRequestConfig) => void;
   onNavigateToAllListings: () => void;
-  hasUnreadMessages: boolean;
+  unreadCount: number;
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
   navigateHome: () => void;

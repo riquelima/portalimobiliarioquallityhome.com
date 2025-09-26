@@ -13,6 +13,7 @@ interface ChatPageProps {
   session: ChatSession;
   property: Property;
   onSendMessage: (sessionId: string, text: string) => void;
+  onMarkAsRead: (sessionId: string) => void;
 }
 
 const getInitials = (name: string) => {
@@ -20,7 +21,7 @@ const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
 };
 
-const ChatPage: React.FC<ChatPageProps> = ({ onBack, user, session, property, onSendMessage }) => {
+const ChatPage: React.FC<ChatPageProps> = ({ onBack, user, session, property, onSendMessage, onMarkAsRead }) => {
   const { t } = useLanguage();
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -33,6 +34,10 @@ const ChatPage: React.FC<ChatPageProps> = ({ onBack, user, session, property, on
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [session.messages]);
+  
+  useEffect(() => {
+    onMarkAsRead(session.id);
+  }, [session.id, onMarkAsRead]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

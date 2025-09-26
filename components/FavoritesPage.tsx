@@ -25,7 +25,7 @@ interface FavoritesPageProps {
   // FIX: Add onNavigateToMyAds prop to resolve typing error.
   onNavigateToMyAds: () => void;
   onNavigateToAllListings: () => void;
-  hasUnreadMessages: boolean;
+  unreadCount: number;
   onContactClick: (property: Property) => void;
   // FIX: Added missing props for Header.
   navigateToGuideToSell: () => void;
@@ -48,7 +48,7 @@ const FavoritesPage: React.FC<FavoritesPageProps> = ({
   onNavigateToChatList,
   onNavigateToMyAds,
   onNavigateToAllListings,
-  hasUnreadMessages,
+  unreadCount,
   onContactClick,
   navigateToGuideToSell,
   navigateToDocumentsForSale,
@@ -71,7 +71,7 @@ const FavoritesPage: React.FC<FavoritesPageProps> = ({
         onNavigateToChatList={onNavigateToChatList}
         onNavigateToMyAds={onNavigateToMyAds}
         onNavigateToAllListings={onNavigateToAllListings}
-        hasUnreadMessages={hasUnreadMessages}
+        unreadCount={unreadCount}
         navigateToGuideToSell={navigateToGuideToSell}
         navigateToDocumentsForSale={navigateToDocumentsForSale}
         navigateHome={navigateHome}

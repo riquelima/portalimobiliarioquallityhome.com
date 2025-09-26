@@ -1,6 +1,3 @@
-
-
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -208,7 +205,7 @@ const App: React.FC = () => {
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
-  const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
+  const [totalUnreadCount, setTotalUnreadCount] = useState(0);
   const fetchingRef = useRef(false);
   const [contactModalProperty, setContactModalProperty] = useState<Property | null>(null);
 
@@ -326,9 +323,13 @@ const App: React.FC = () => {
 
             if (chatError) console.error('Error fetching chat sessions:', chatError);
             else if (chatData) {
+                let totalUnread = 0;
                 const adaptedSessions: ChatSession[] = chatData.map((s: any) => {
                     const validParticipants = (s.participants || []).filter((p: any) => p && p.id);
                     const validMessages = (s.messages || []).filter((m: any) => m && m.id && m.data_envio);
+
+                    const unreadCount = validMessages.filter((m: any) => m.foi_lida === false && m.remetente_id !== currentUser.id).length;
+                    totalUnread += unreadCount;
 
                     return {
                         id: s.session_id,
@@ -342,15 +343,19 @@ const App: React.FC = () => {
                             senderId: m.remetente_id,
                             text: m.conteudo,
                             timestamp: new Date(m.data_envio),
+                            isRead: m.foi_lida,
                         })).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
+                        unreadCount: unreadCount,
                     };
                 });
                 setChatSessions(adaptedSessions);
+                setTotalUnreadCount(totalUnread);
             }
         } else {
             setFavorites([]);
             setChatSessions([]);
             setMyAds([]);
+            setTotalUnreadCount(0);
         }
     } catch (error: any) {
         console.error('Falha ao buscar dados:', error);
@@ -465,11 +470,6 @@ const App: React.FC = () => {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'mensagens_chat' }, (payload) => {
         const newMessage = payload.new as any;
   
-        // Set notification for incoming messages
-        if (newMessage.remetente_id !== user.id) {
-          setHasUnreadMessages(true);
-        }
-  
         // Update chat sessions state
         setChatSessions(prevSessions => {
           const sessionIndex = prevSessions.findIndex(s => s.id === newMessage.sessao_id);
@@ -479,8 +479,7 @@ const App: React.FC = () => {
             fetchAllData(user);
             return prevSessions;
           }
-  
-          // If session exists, update it immutably
+
           const updatedSessions = [...prevSessions];
           const targetSession = { ...updatedSessions[sessionIndex] };
   
@@ -495,9 +494,16 @@ const App: React.FC = () => {
             senderId: newMessage.remetente_id,
             text: newMessage.conteudo,
             timestamp: new Date(newMessage.data_envio),
+            isRead: newMessage.foi_lida
           };
           
           targetSession.messages = [...targetSession.messages, adaptedMessage];
+
+          // Increment unread count if the message is from the other user
+          if (newMessage.remetente_id !== user.id) {
+            targetSession.unreadCount = (targetSession.unreadCount || 0) + 1;
+            setTotalUnreadCount(prev => prev + 1);
+          }
           
           updatedSessions[sessionIndex] = targetSession;
   
@@ -548,7 +554,6 @@ const App: React.FC = () => {
   const navigateToPropertyDetail = (id: number) => setPageState({ page: 'propertyDetail', propertyId: id, userLocation: null });
   const navigateToFavorites = () => setPageState({ page: 'favorites', userLocation: null });
   const navigateToChatList = () => {
-    setHasUnreadMessages(false);
     setPageState({ page: 'chatList', userLocation: null });
   };
   const navigateToChat = (sessionId: string) => setPageState({ page: 'chat', chatSessionId: sessionId, userLocation: null });
@@ -734,9 +739,90 @@ const App: React.FC = () => {
       conteudo: text.trim(),
     };
 
-    const { error } = await supabase.from('mensagens_chat').insert(newMessage);
-    if(error) console.error("Error sending message:", error);
+    const { data, error } = await supabase
+      .from('mensagens_chat')
+      .insert(newMessage)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error sending message:", error);
+      // Optionally show an error to the user
+      showModal({
+        type: 'error',
+        title: t('systemModal.errorTitle'),
+        message: 'Falha ao enviar mensagem. Tente novamente.',
+      });
+      return;
+    }
+    
+    if (data) {
+      // The realtime subscription will receive this message. To make the sender's UI
+      // update instantly, we can manually add the new message to the local state.
+      // The subscription handler has a duplicate check, so this is safe.
+      const adaptedMessage: Message = {
+        id: data.id,
+        senderId: data.remetente_id,
+        text: data.conteudo,
+        timestamp: new Date(data.data_envio),
+        isRead: data.foi_lida,
+      };
+
+      setChatSessions(prevSessions => {
+        const sessionIndex = prevSessions.findIndex(s => s.id === sessionId);
+        if (sessionIndex === -1) return prevSessions;
+
+        const updatedSessions = [...prevSessions];
+        const targetSession = { ...updatedSessions[sessionIndex] };
+        
+        // Ensure not to add duplicates if realtime event arrives very fast
+        if (targetSession.messages.some(m => m.id === adaptedMessage.id)) {
+            return prevSessions;
+        }
+
+        targetSession.messages = [...targetSession.messages, adaptedMessage];
+        updatedSessions[sessionIndex] = targetSession;
+
+        return updatedSessions;
+      });
+    }
   };
+
+  const handleMarkAsRead = useCallback(async (sessionId: string) => {
+    if (!user) return;
+
+    const sessionToUpdate = chatSessions.find(s => s.id === sessionId);
+    if (!sessionToUpdate || sessionToUpdate.unreadCount === 0) {
+        return; // No unread messages to mark
+    }
+
+    const { error } = await supabase
+        .from('mensagens_chat')
+        .update({ foi_lida: true })
+        .match({ sessao_id: sessionId, foi_lida: false })
+        .neq('remetente_id', user.id);
+
+    if (error) {
+        console.error("Error marking messages as read:", error);
+    } else {
+        // Optimistically update local state
+        setTotalUnreadCount(prev => prev - sessionToUpdate.unreadCount);
+        setChatSessions(prevSessions => {
+            return prevSessions.map(session => {
+                if (session.id === sessionId) {
+                    return {
+                        ...session,
+                        unreadCount: 0,
+                        messages: session.messages.map(msg => 
+                            msg.senderId !== user.id ? { ...msg, isRead: true } : msg
+                        )
+                    };
+                }
+                return session;
+            });
+        });
+    }
+  }, [user, chatSessions]);
   
   const openContactModal = (property: Property) => {
     if (!property.owner) {
@@ -759,7 +845,7 @@ const App: React.FC = () => {
       onNavigateToChatList: navigateToChatList,
       onNavigateToMyAds: navigateToMyAds,
       onNavigateToAllListings: navigateToAllListings,
-      hasUnreadMessages,
+      unreadCount: totalUnreadCount,
       navigateToGuideToSell,
       navigateToDocumentsForSale,
     };
@@ -857,6 +943,7 @@ const App: React.FC = () => {
                   session={session}
                   property={propertyForChat}
                   onSendMessage={handleSendMessage}
+                  onMarkAsRead={handleMarkAsRead}
                />;
       case 'myAds':
         if (!user) { navigateHome(); return null; }

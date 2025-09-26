@@ -14,7 +14,7 @@ interface DocumentsForSalePageProps {
   onNavigateToChatList: () => void;
   onNavigateToMyAds: () => void;
   onNavigateToAllListings: () => void;
-  hasUnreadMessages: boolean;
+  unreadCount: number;
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
   // FIX: Add missing navigateHome prop for Header.

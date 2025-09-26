@@ -26,7 +26,7 @@ interface SearchResultsPageProps {
   // FIX: Add onNavigateToMyAds prop to resolve typing error.
   onNavigateToMyAds: () => void;
   onNavigateToAllListings: () => void;
-  hasUnreadMessages: boolean;
+  unreadCount: number;
   onContactClick: (property: Property) => void;
   // FIX: Added missing props for Header.
   navigateToGuideToSell: () => void;
@@ -50,7 +50,7 @@ const SearchResultsPage: React.FC<SearchResultsPageProps> = ({
   onNavigateToChatList,
   onNavigateToMyAds,
   onNavigateToAllListings,
-  hasUnreadMessages,
+  unreadCount,
   onContactClick,
   navigateToGuideToSell,
   navigateToDocumentsForSale,
@@ -73,7 +73,7 @@ const SearchResultsPage: React.FC<SearchResultsPageProps> = ({
         onNavigateToChatList={onNavigateToChatList}
         onNavigateToMyAds={onNavigateToMyAds}
         onNavigateToAllListings={onNavigateToAllListings}
-        hasUnreadMessages={hasUnreadMessages}
+        unreadCount={unreadCount}
         navigateToGuideToSell={navigateToGuideToSell}
         navigateToDocumentsForSale={navigateToDocumentsForSale}
         navigateHome={navigateHome}

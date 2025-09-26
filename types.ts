@@ -91,6 +91,7 @@ export interface Message {
   senderId: string;
   text: string;
   timestamp: Date;
+  isRead: boolean;
 }
 
 export interface ChatSession {
@@ -104,4 +105,5 @@ export interface ChatSession {
     }
   };
   messages: Message[];
+  unreadCount: number;
 }

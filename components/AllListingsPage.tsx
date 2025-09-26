@@ -22,7 +22,7 @@ interface AllListingsPageProps {
   onNavigateToMyAds: () => void;
   onSearchSubmit: (query: string) => void;
   onNavigateToAllListings: () => void;
-  hasUnreadMessages: boolean;
+  unreadCount: number;
   onGeolocationError: () => void;
   onContactClick: (property: Property) => void;
   navigateToGuideToSell: () => void;

@@ -31,7 +31,7 @@ interface HeaderProps {
   onNavigateToChatList: () => void;
   onNavigateToMyAds: () => void;
   onNavigateToAllListings: () => void;
-  hasUnreadMessages: boolean;
+  unreadCount: number;
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
   navigateHome: () => void;
@@ -43,7 +43,7 @@ const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
 }
 
-const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAccessClick, user, profile, onLogout, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, onNavigateToAllListings, hasUnreadMessages, navigateToGuideToSell, navigateToDocumentsForSale }) => {
+const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAccessClick, user, profile, onLogout, onNavigateToFavorites, onNavigateToChatList, onNavigateToMyAds, onNavigateToAllListings, unreadCount, navigateToGuideToSell, navigateToDocumentsForSale }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -231,8 +231,8 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
                       <a href="#" onClick={(e) => { e.preventDefault(); onNavigateToChatList(); setIsUserDropdownOpen(false); }} className="relative flex items-center px-4 py-2 text-sm text-brand-dark hover:bg-gray-100 w-full">
                           <ChatIcon className="w-5 h-5 mr-3 text-brand-gray" />
                           <span>{t('header.chat')}</span>
-                          {hasUnreadMessages && (
-                            <span className="absolute right-4 top-1/2 -translate-y-1/2 w-2 h-2 bg-brand-red rounded-full"></span>
+                          {unreadCount > 0 && (
+                            <span className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 bg-brand-red rounded-full text-white text-xs flex items-center justify-center font-bold">{unreadCount}</span>
                           )}
                       </a>
                     </nav>
@@ -365,8 +365,8 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
               <button onClick={() => { onNavigateToChatList(); setIsMenuOpen(false); }} className="relative w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 p-3 text-lg">
                   <ChatIcon className="w-6 h-6 mr-3 text-brand-gray" />
                   <span>{t('header.chat')}</span>
-                  {hasUnreadMessages && (
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-brand-red rounded-full"></span>
+                  {unreadCount > 0 && (
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 bg-brand-red rounded-full text-white text-sm flex items-center justify-center font-bold">{unreadCount}</span>
                   )}
               </button>
               <hr className="my-2" />

@@ -24,7 +24,7 @@ interface ChatListPageProps {
   // FIX: Add onNavigateToMyAds prop to resolve typing error.
   onNavigateToMyAds: () => void;
   onNavigateToAllListings: () => void;
-  hasUnreadMessages: boolean;
+  unreadCount: number;
   // FIX: Added missing props for Header.
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
@@ -32,7 +32,7 @@ interface ChatListPageProps {
 }
 
 const ChatListPage: React.FC<ChatListPageProps> = ({
-  onBack, user, profile, onLogout, onPublishAdClick, onAccessClick, onNavigateToFavorites, onNavigateToChatList, chatSessions, properties, onNavigateToChat, onNavigateToMyAds, onNavigateToAllListings, hasUnreadMessages, navigateToGuideToSell, navigateToDocumentsForSale, navigateHome
+  onBack, user, profile, onLogout, onPublishAdClick, onAccessClick, onNavigateToFavorites, onNavigateToChatList, chatSessions, properties, onNavigateToChat, onNavigateToMyAds, onNavigateToAllListings, unreadCount, navigateToGuideToSell, navigateToDocumentsForSale, navigateHome
 }) => {
   const { t } = useLanguage();
 
@@ -66,7 +66,7 @@ const ChatListPage: React.FC<ChatListPageProps> = ({
         onNavigateToChatList={onNavigateToChatList}
         onNavigateToMyAds={onNavigateToMyAds}
         onNavigateToAllListings={onNavigateToAllListings}
-        hasUnreadMessages={hasUnreadMessages}
+        unreadCount={unreadCount}
         navigateToGuideToSell={navigateToGuideToSell}
         navigateToDocumentsForSale={navigateToDocumentsForSale}
         navigateHome={navigateHome}
@@ -106,6 +106,13 @@ const ChatListPage: React.FC<ChatListPageProps> = ({
                                   {lastMessage ? lastMessage.text : "Nenhuma mensagem ainda"}
                                </p>
                           </div>
+                          {session.unreadCount > 0 && (
+                            <div className="flex-shrink-0 ml-2">
+                                <span className="w-6 h-6 bg-brand-red rounded-full text-white text-xs font-bold flex items-center justify-center">
+                                    {session.unreadCount}
+                                </span>
+                            </div>
+                           )}
                       </div>
                     </li>
                   )
