@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -227,19 +228,33 @@ const App: React.FC = () => {
     console.time('fetchAllData');
 
     try {
-        // Step 1: Fetch base properties
-        let propertiesQuery = supabase
+        // Step 1: Fetch all active properties. This is more robust against browser-specific auth timing issues.
+        const { data: activeProperties, error: activeError } = await supabase
             .from('imoveis')
-            .select('*');
+            .select('*')
+            .eq('status', 'ativo');
 
+        if (activeError) throw activeError;
+
+        let propertiesData = activeProperties || [];
+
+        // If a user is logged in, fetch their properties as well to include their inactive ads.
         if (currentUser) {
-            propertiesQuery = propertiesQuery.or(`status.eq.ativo,anunciante_id.eq.${currentUser.id}`);
-        } else {
-            propertiesQuery = propertiesQuery.eq('status', 'ativo');
-        }
+            const { data: userProperties, error: userError } = await supabase
+                .from('imoveis')
+                .select('*')
+                .eq('anunciante_id', currentUser.id);
 
-        const { data: propertiesData, error: propertiesError } = await propertiesQuery;
-        if (propertiesError) throw propertiesError;
+            if (userError) {
+                console.error("Error fetching user's properties:", userError);
+            } else if (userProperties) {
+                // Merge active properties with the user's own properties, avoiding duplicates.
+                const propertyMap = new Map<number, any>();
+                propertiesData.forEach(p => propertyMap.set(p.id, p));
+                userProperties.forEach(p => propertyMap.set(p.id, p)); // Overwrites active with user's version if present
+                propertiesData = Array.from(propertyMap.values());
+            }
+        }
 
         if (!propertiesData || propertiesData.length === 0) {
             setProperties([]);
