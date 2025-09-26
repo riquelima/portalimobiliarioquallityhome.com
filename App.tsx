@@ -205,9 +205,10 @@ const App: React.FC = () => {
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthReady, setIsAuthReady] = useState(false);
-  const [totalUnreadCount, setTotalUnreadCount] = useState(0);
   const fetchingRef = useRef(false);
   const [contactModalProperty, setContactModalProperty] = useState<Property | null>(null);
+
+  const totalUnreadChatsCount = chatSessions.filter(s => s.unreadCount > 0).length;
 
   const navigateHome = useCallback(() => setPageState({ page: 'home', userLocation: null }), []);
 
@@ -323,13 +324,11 @@ const App: React.FC = () => {
 
             if (chatError) console.error('Error fetching chat sessions:', chatError);
             else if (chatData) {
-                let totalUnread = 0;
                 const adaptedSessions: ChatSession[] = chatData.map((s: any) => {
                     const validParticipants = (s.participants || []).filter((p: any) => p && p.id);
                     const validMessages = (s.messages || []).filter((m: any) => m && m.id && m.data_envio);
 
                     const unreadCount = validMessages.filter((m: any) => m.foi_lida === false && m.remetente_id !== currentUser.id).length;
-                    totalUnread += unreadCount;
 
                     return {
                         id: s.session_id,
@@ -349,13 +348,11 @@ const App: React.FC = () => {
                     };
                 });
                 setChatSessions(adaptedSessions);
-                setTotalUnreadCount(totalUnread);
             }
         } else {
             setFavorites([]);
             setChatSessions([]);
             setMyAds([]);
-            setTotalUnreadCount(0);
         }
     } catch (error: any) {
         console.error('Falha ao buscar dados:', error);
@@ -502,7 +499,6 @@ const App: React.FC = () => {
           // Increment unread count if the message is from the other user
           if (newMessage.remetente_id !== user.id) {
             targetSession.unreadCount = (targetSession.unreadCount || 0) + 1;
-            setTotalUnreadCount(prev => prev + 1);
           }
           
           updatedSessions[sessionIndex] = targetSession;
@@ -806,7 +802,6 @@ const App: React.FC = () => {
         console.error("Error marking messages as read:", error);
     } else {
         // Optimistically update local state
-        setTotalUnreadCount(prev => prev - sessionToUpdate.unreadCount);
         setChatSessions(prevSessions => {
             return prevSessions.map(session => {
                 if (session.id === sessionId) {
@@ -845,7 +840,7 @@ const App: React.FC = () => {
       onNavigateToChatList: navigateToChatList,
       onNavigateToMyAds: navigateToMyAds,
       onNavigateToAllListings: navigateToAllListings,
-      unreadCount: totalUnreadCount,
+      unreadCount: totalUnreadChatsCount,
       navigateToGuideToSell,
       navigateToDocumentsForSale,
     };
