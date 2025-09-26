@@ -255,13 +255,13 @@ const App: React.FC = () => {
         const propertyIds = propertiesData.map(p => p.id);
         const advertiserIds = [...new Set(propertiesData.map(p => p.anunciante_id).filter(id => id))];
 
-        // Step 2: Concurrently fetch related media and profiles
-        const [mediaResponse, profilesResponse] = await Promise.all([
-            supabase.from('midias_imovel').select('*').in('imovel_id', propertyIds),
-            advertiserIds.length > 0
-                ? supabase.from('perfis').select('id, nome_completo, telefone, url_foto_perfil').in('id', advertiserIds)
-                : Promise.resolve({ data: [], error: null })
-        ]);
+        // Step 2: Fetch related media and profiles sequentially to avoid potential browser-specific race conditions.
+        const mediaResponse = await supabase.from('midias_imovel').select('*').in('imovel_id', propertyIds);
+
+        const profilesResponse = advertiserIds.length > 0
+            ? await supabase.from('perfis').select('id, nome_completo, telefone, url_foto_perfil').in('id', advertiserIds)
+            : { data: [], error: null };
+
 
         const { data: mediaData, error: mediaError } = mediaResponse;
         if (mediaError) console.error("Could not fetch media:", mediaError);
