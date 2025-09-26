@@ -83,7 +83,7 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
         <nav className="container mx-auto px-4 sm:px-6 py-3 flex justify-between items-center relative">
           {/* Logo */}
           <a href="#" onClick={(e) => { e.preventDefault(); navigateHome(); }} className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 transform transition-transform duration-300 hover:scale-105 z-10">
-            <img src="https://i.imgur.com/FuxDdyF.png" alt="Quality Home Logo" className="h-16 sm:h-20" />
+            <img src="https://i.imgur.com/FuxDdyF.png" alt="Quallity Home Logo" className="h-16 sm:h-20" />
           </a>
 
           {/* Desktop Navigation Links */}

@@ -381,7 +381,7 @@ const App: React.FC = () => {
         // On initial session load, try to restore page state from sessionStorage
         if (event === 'INITIAL_SESSION') {
             try {
-                const savedStateJSON = sessionStorage.getItem('qualityHomePageState');
+                const savedStateJSON = sessionStorage.getItem('quallityHomePageState');
                 if (savedStateJSON) {
                     const savedState = JSON.parse(savedStateJSON) as PageState;
                     if (savedState && typeof savedState.page === 'string') {
@@ -390,7 +390,7 @@ const App: React.FC = () => {
                 }
             } catch (error) {
                 console.error("Could not restore page state:", error);
-                sessionStorage.removeItem('qualityHomePageState'); // Clear corrupted state
+                sessionStorage.removeItem('quallityHomePageState'); // Clear corrupted state
             }
         }
 
@@ -426,7 +426,7 @@ const App: React.FC = () => {
         }
       } else {
         setProfile(null);
-        sessionStorage.removeItem('qualityHomePageState'); // Clear state on logout
+        sessionStorage.removeItem('quallityHomePageState'); // Clear state on logout
       }
       setIsAuthReady(true);
     });
@@ -441,7 +441,7 @@ const App: React.FC = () => {
     if (user && isAuthReady) {
         try {
             const stateToSave = JSON.stringify(pageState);
-            sessionStorage.setItem('qualityHomePageState', stateToSave);
+            sessionStorage.setItem('quallityHomePageState', stateToSave);
         } catch (error) {
             console.error("Could not save page state:", error);
         }

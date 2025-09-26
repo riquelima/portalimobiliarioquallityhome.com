@@ -65,7 +65,13 @@ const ptTranslations = {
     "loadingLocation": "Obtendo localização...",
     "searchButton": "Buscar",
     "geolocationNotSupported": "A geolocalização não é suportada por este navegador.",
-    "geolocationError": "Não foi possível obter a sua localização. Por favor, verifique as permissões do seu navegador."
+    "geolocationError": "Não foi possível obter a sua localização. Por favor, verifique as permissões do seu navegador.",
+    "locationPermissionModal": {
+        "title": "Usar sua localização atual?",
+        "message": "Podemos centralizar o mapa em sua localização para facilitar o desenho da área de busca.",
+        "acceptButton": "Sim, usar localização",
+        "denyButton": "Não, obrigado"
+    }
   },
   "listings": {
     "title": "Imóveis em Destaque",
@@ -127,7 +133,7 @@ const ptTranslations = {
     "breadcrumbHome": "Início",
     "breadcrumbPublish": "Como publicar um anúncio",
     "mainCard": {
-      "title": "Como publicar um anúncio na Quality Home",
+      "title": "Como publicar um anúncio na Quallity Home",
       "benefit1": "Seus 2 primeiros anúncios são grátis. Para quartos, você pode publicar até 5 anúncios gratuitos.",
       "benefit2": "Você tem acesso a uma área privada onde pode gerenciar seu anúncio e os contatos que recebe.",
       "benefit3": "Você pode tirar dúvidas, trocar informações e organizar visitas de forma eficiente através do nosso chat.",
@@ -148,11 +154,11 @@ const ptTranslations = {
       "step4Content": "Inclua informações sobre seu imóvel, como o número de quartos, m², banheiros, etc. Mencione também as comodidades adicionais, como a presença de elevador, terraço, vaga de garagem, etc. Afinal, todos estes detalhes valorizam seu imóvel. Destaque as características especiais, principalmente as que aparecem nas fotos. Não se esqueça de mencionar os serviços próximos, os transportes disponíveis e os pontos de interesse na região."
     },
     "advantages": {
-      "title": "Vantagens de publicar na Quality Home",
+      "title": "Vantagens de publicar na Quallity Home",
       "advantage1Title": "Garantia de visibilidade",
       "advantage1Content": "Os anúncios publicados em nosso site são visitados por milhões de usuários, o que lhe dá a oportunidade de vender ou alugar seu imóvel de forma mais rápida e eficaz.",
       "advantage2Title": "A melhor experiência",
-      "advantage2Content": "O aplicativo da Quality Home tem múltiplas funcionalidades que ajudarão você a gerenciar sua publicação e, para quem procura um imóvel, permite configurar alertas personalizados para receber novos imóveis imediatamente.",
+      "advantage2Content": "O aplicativo da Quallity Home tem múltiplas funcionalidades que ajudarão você a gerenciar sua publicação e, para quem procura um imóvel, permite configurar alertas personalizados para receber novos imóveis imediatamente.",
       "advantage3Title": "Grande variedade de produtos para o seu anúncio",
       "advantage3Content": "Disponibilizamos uma vasta gama de ferramentas para melhorar a posição do seu anúncio e ganhar visibilidade."
     }
@@ -229,7 +235,7 @@ const ptTranslations = {
       "aiDescriptionError": "Não foi possível gerar uma descrição. Verifique sua conexão ou tente novamente.",
       "apartmentCharacteristics": "Características do imóvel",
       "landCharacteristics": "Características do Terreno",
-      "topography": "Topografia",
+      "topografia": "Topografia",
       "flat": "Plano",
       "uphill": "Aclive",
       "downhill": "Declive",
@@ -408,7 +414,7 @@ const ptTranslations = {
     "phone": "Telefone",
     "whatsappButton": "Conversar no WhatsApp",
     "chatButton": "Conversar pelo chat",
-    "whatsappMessage": "Olá, vi este imóvel no Quality Home Portal e gostaria de mais informações. Título do anúncio: {title}"
+    "whatsappMessage": "Olá, vi este imóvel no Quallity Home Portal e gostaria de mais informações. Título do anúncio: {title}"
   },
   "chatList": {
     "title": "Minhas Conversas",
@@ -486,7 +492,7 @@ const ptTranslations = {
     }
   },
   "footer": {
-    "text": "Quality Home Portal Imobiliário. Todos os direitos reservados."
+    "text": "Quallity Home Portal Imobiliário. Todos os direitos reservados."
   }
 };
 const enTranslations = {
@@ -560,7 +566,13 @@ const enTranslations = {
     "loadingLocation": "Getting location...",
     "searchButton": "Search",
     "geolocationNotSupported": "Geolocation is not supported by this browser.",
-    "geolocationError": "Could not get your location. Please check your browser permissions."
+    "geolocationError": "Could not get your location. Please check your browser permissions.",
+    "locationPermissionModal": {
+        "title": "Use your current location?",
+        "message": "We can center the map on your location to make it easier to draw your search area.",
+        "acceptButton": "Yes, use location",
+        "denyButton": "No, thanks"
+    }
   },
   "listings": {
     "title": "Featured Properties",
@@ -903,7 +915,7 @@ const enTranslations = {
     "phone": "Phone",
     "whatsappButton": "Chat on WhatsApp",
     "chatButton": "Chat via app",
-    "whatsappMessage": "Hello, I saw this property on the Quality Home Portal and would like more information. Ad title: {title}"
+    "whatsappMessage": "Hello, I saw this property on the Quallity Home Portal and would like more information. Ad title: {title}"
   },
   "chatList": {
     "title": "My Chats",
@@ -981,7 +993,7 @@ const enTranslations = {
     }
   },
   "footer": {
-    "text": "Quality Home Real Estate Portal. All rights reserved."
+    "text": "Quallity Home Real Estate Portal. All rights reserved."
   }
 };
 const esTranslations = {
@@ -1055,7 +1067,13 @@ const esTranslations = {
     "loadingLocation": "Obteniendo ubicación...",
     "searchButton": "Buscar",
     "geolocationNotSupported": "La geolocalización no es compatible con este navegador.",
-    "geolocationError": "No se pudo obtener tu ubicación. Por favor, comprueba los permisos de tu navegador."
+    "geolocationError": "No se pudo obtener tu ubicación. Por favor, comprueba los permisos de tu navegador.",
+    "locationPermissionModal": {
+        "title": "¿Usar su ubicación actual?",
+        "message": "Podemos centrar el mapa en su ubicación para que sea más fácil dibujar su área de búsqueda.",
+        "acceptButton": "Sí, usar ubicación",
+        "denyButton": "No, gracias"
+    }
   },
   "listings": {
     "title": "Inmuebles Destacados",
@@ -1135,7 +1153,7 @@ const esTranslations = {
       "step3Title": "3. Poner un precio de acuerdo con el valor de mercado",
       "step3Content": "En caso de duda, puedes hacer una valoración gratuita de tu inmueble en nuestra web o verificar el precio medio en esa zona.",
       "step4Title": "4. Indicar las características de tu inmueble y describir tu casa en detalle",
-      "step4Content": "Incluye información sobre tu inmueble, como el número de habitaciones, m2, baños, etc. Refiere también las comodidades adicionales, como la presencia de un ascensor, una terraza, una plaza de garaje, un trastero, etc. Al fin y al cabo, todos estos detalles valorizan tu inmueble. Destaca las características especiales de tu inmueble, sobre todo las que aparecen en las fotografías. No te olvides de explicar los servicios cercanos, los transportes disponibles y los lugares de interés en la zona."
+      "step4Content": "Incluye información sobre tu inmueble, como el número de habitaciones, m2, baños, etc. Refiere também as comodidades adicionais, como a presença de um ascensor, uma terraza, uma plaza de garaje, un trastero, etc. Al fin y al cabo, todos estos detalles valorizan tu inmueble. Destaca las características especiales de tu inmueble, sobre todo las que aparecen en las fotografías. No te olvides de explicar los servicios cercanos, los transportes disponibles y los lugares de interés en la zona."
     },
     "advantages": {
       "title": "Ventajas de publicar en Quallity Home",
@@ -1398,7 +1416,7 @@ const esTranslations = {
     "phone": "Teléfono",
     "whatsappButton": "Chatear por WhatsApp",
     "chatButton": "Chatear por el chat",
-    "whatsappMessage": "Hola, vi este inmueble en el Portal Quality Home y me gustaría más información. Título del anuncio: {title}"
+    "whatsappMessage": "Hola, vi este inmueble en el Portal Quallity Home y me gustaría más información. Título del anuncio: {title}"
   },
   "chatList": {
     "title": "Mis Chats",
@@ -1476,7 +1494,7 @@ const esTranslations = {
     }
   },
   "footer": {
-    "text": "Quality Home Portal Inmobiliario. Todos los derechos reservados."
+    "text": "Quallity Home Portal Inmobiliario. Todos los derechos reservados."
   }
 };
 

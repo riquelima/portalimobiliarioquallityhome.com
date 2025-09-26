@@ -47,7 +47,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onViewDetails, is
 
   return (
     <div className="w-full bg-white rounded-lg shadow-md overflow-hidden transform transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-xl flex flex-col border border-gray-200">
-      <div className="relative">
+      <div className="relative cursor-pointer" onClick={() => onViewDetails(property.id)}>
         <img src={imageSrc} alt={property.title} className="w-full h-56 object-cover aspect-video" />
         {property.status && (
           <span className={`absolute top-3 left-3 text-white text-xs font-bold px-3 py-1 rounded-full ${statusColorMap[property.status as keyof typeof statusColorMap]}`}>

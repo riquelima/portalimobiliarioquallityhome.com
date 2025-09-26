@@ -99,7 +99,7 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
       <main className="flex-grow">
         <section className="bg-white py-12">
           <div className="container mx-auto px-4 sm:px-6 text-center">
-            <img src="https://i.imgur.com/FuxDdyF.png" alt="Quality Home Logo" className="h-24 mx-auto mb-4" />
+            <img src="https://i.imgur.com/FuxDdyF.png" alt="Quallity Home Logo" className="h-24 mx-auto mb-4" />
             <h1 className="text-3xl sm:text-4xl font-bold text-brand-navy mb-4">{t('header.searchDropdown.buy.explore')}</h1>
             <form onSubmit={handleSearchSubmit} className="max-w-2xl mx-auto">
               <div className="relative flex flex-col sm:flex-row items-center gap-2">
