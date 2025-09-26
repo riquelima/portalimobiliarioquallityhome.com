@@ -24,6 +24,7 @@ import DocumentsForSalePage from './components/DocumentsForSalePage';
 import { useLanguage } from './contexts/LanguageContext';
 import { supabase } from './supabaseClient';
 import type { User, Property, ChatSession, Message, Profile, Media } from './types';
+import ErrorIcon from './components/icons/ErrorIcon';
 
 interface PageState {
   page: 'home' | 'map' | 'publish' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'favorites' | 'chatList' | 'chat' | 'myAds' | 'edit-journey' | 'allListings' | 'guideToSell' | 'documentsForSale';
@@ -751,7 +752,22 @@ const App: React.FC = () => {
             <Header {...headerProps} />
             <main>
               <Hero onDrawOnMapClick={() => navigateToMap()} onSearchNearMe={(location) => navigateToMap(location)} onGeolocationError={openGeoErrorModal} onSearchSubmit={navigateToSearchResults} />
-              <PropertyListings properties={properties} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} isLoading={isLoading} onContactClick={openContactModal} fetchError={fetchError} />
+              {fetchError ? (
+                <section className="bg-white py-16 sm:py-20">
+                  <div className="container mx-auto px-4 sm:px-6">
+                    <div className="text-center py-16 bg-red-50 border border-red-200 rounded-lg">
+                        <ErrorIcon className="w-12 h-12 text-brand-red mx-auto mb-4" />
+                        <p className="text-brand-red font-semibold text-lg mb-2">{t('systemModal.errorTitle')}</p>
+                        <p className="text-brand-gray">{t('systemModal.fetchError')}</p>
+                        <p className="mt-4 text-sm text-gray-600 bg-red-100 p-3 rounded-md inline-block max-w-full overflow-x-auto">
+                            <strong className="font-bold">{t('systemModal.errorDetails')}:</strong> <code className="text-xs">{fetchError}</code>
+                        </p>
+                    </div>
+                  </div>
+                </section>
+              ) : (
+                <PropertyListings properties={properties} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} isLoading={isLoading} onContactClick={openContactModal} />
+              )}
             </main>
             <footer className="bg-brand-light-gray text-brand-gray py-8 text-center mt-20">
               <div className="container mx-auto">

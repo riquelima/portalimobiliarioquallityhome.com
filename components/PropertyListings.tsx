@@ -15,7 +15,6 @@ interface PropertyListingsProps {
   isLoading: boolean;
   title?: string;
   onContactClick: (property: Property) => void;
-  fetchError?: string | null;
 }
 
 const SkeletonCard: React.FC = () => (
@@ -39,7 +38,7 @@ const SkeletonCard: React.FC = () => (
 );
 
 
-const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewDetails, favorites, onToggleFavorite, isLoading, title, onContactClick, fetchError }) => {
+const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewDetails, favorites, onToggleFavorite, isLoading, title, onContactClick }) => {
   const { t } = useLanguage();
 
   return (
@@ -52,15 +51,6 @@ const PropertyListings: React.FC<PropertyListingsProps> = ({ properties, onViewD
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {isLoading ? (
             Array.from({ length: 6 }).map((_, index) => <SkeletonCard key={index} />)
-          ) : fetchError ? (
-            <div className="md:col-span-2 lg:col-span-3 text-center py-16 bg-red-50 border border-red-200 rounded-lg">
-                <ErrorIcon className="w-12 h-12 text-brand-red mx-auto mb-4" />
-                <p className="text-brand-red font-semibold text-lg mb-2">{t('systemModal.errorTitle')}</p>
-                <p className="text-brand-gray">{t('systemModal.fetchError')}</p>
-                <p className="mt-4 text-sm text-gray-600 bg-red-100 p-3 rounded-md inline-block max-w-full overflow-x-auto">
-                    <strong className="font-bold">{t('systemModal.errorDetails')}:</strong> <code className="text-xs">{fetchError}</code>
-                </p>
-            </div>
           ) : properties.length > 0 ? (
             properties.map((property) => (
               <PropertyCard 
