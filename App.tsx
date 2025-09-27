@@ -27,6 +27,7 @@ import { useLanguage } from './contexts/LanguageContext';
 import { supabase } from './supabaseClient';
 import type { User, Property, ChatSession, Message, Profile, Media } from './types';
 import ErrorIcon from './components/icons/ErrorIcon';
+import WarningIcon from './components/icons/WarningIcon';
 
 interface PageState {
   page: 'home' | 'map' | 'publish' | 'publish-journey' | 'searchResults' | 'propertyDetail' | 'favorites' | 'chatList' | 'chat' | 'myAds' | 'edit-journey' | 'allListings' | 'guideToSell' | 'documentsForSale';
@@ -213,6 +214,7 @@ const App: React.FC = () => {
   const debounceTimerRef = useRef<number | null>(null);
   const [contactModalProperty, setContactModalProperty] = useState<Property | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [isCorsError, setIsCorsError] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const [isSplashFading, setIsSplashFading] = useState(false);
 
@@ -233,6 +235,7 @@ const App: React.FC = () => {
     fetchingRef.current = true;
     setIsLoading(true);
     setFetchError(null);
+    setIsCorsError(false);
     console.time('fetchAllData');
 
     try {
@@ -248,6 +251,7 @@ const App: React.FC = () => {
         if (propertiesError) throw propertiesError;
 
         if (!propertiesData || propertiesData.length === 0) {
+            console.warn("Nenhum dado de imóvel foi retornado pelo Supabase.");
             setProperties([]);
             setMyAds([]);
             if (currentUser) {
@@ -286,7 +290,6 @@ const App: React.FC = () => {
         });
 
         const adaptedProperties = propertiesData.map((db: any): Property => {
-            // FIX: Explicitly cast ownerProfileData to Profile | undefined to resolve type errors.
             const ownerProfileData = (db.anunciante_id ? profilesMap.get(db.anunciante_id) : undefined) as Profile | undefined;
             const ownerProfile = ownerProfileData ? {
                 ...ownerProfileData,
@@ -353,18 +356,19 @@ const App: React.FC = () => {
         }
     } catch (error: any) {
         console.error('Falha ao buscar dados:', error);
-        setFetchError(error.message);
+         if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
+            console.warn('Network error detected, likely a CORS issue.');
+            setIsCorsError(true);
+        } else {
+            setFetchError(error.message);
+        }
+
         console.warn("Clearing local/session storage due to fetch error:", error);
         sessionStorage.clear();
         localStorage.clear();
 
         setProperties([]);
         setMyAds([]);
-        showModal({
-            type: 'error',
-            title: t('systemModal.errorTitle'),
-            message: `${t('systemModal.fetchError')} ${t('systemModal.errorDetails')}: ${error.message}`,
-        });
     } finally {
         console.timeEnd('fetchAllData');
         setIsLoading(false);
@@ -766,7 +770,33 @@ const App: React.FC = () => {
               <Header {...headerProps} />
               <main>
                 <Hero onDrawOnMapClick={() => navigateToMap()} onSearchNearMe={(location) => navigateToMap(location)} onGeolocationError={openGeoErrorModal} onSearchSubmit={navigateToSearchResults} />
-                {fetchError ? (
+                {isCorsError ? (
+                  <section className="bg-white py-16 sm:py-20">
+                    <div className="container mx-auto px-4 sm:px-6">
+                      <div className="text-left p-6 sm:p-8 bg-orange-50 border-l-4 border-orange-400 rounded-r-lg">
+                          <div className="flex">
+                              <div className="flex-shrink-0">
+                                  <WarningIcon className="h-6 w-6 text-orange-400" />
+                              </div>
+                              <div className="ml-3">
+                                  <h3 className="text-lg font-bold text-orange-800">{t('systemModal.corsError.title')}</h3>
+                                  <div className="mt-2 text-sm text-orange-700 space-y-3">
+                                      <p>{t('systemModal.corsError.description')}</p>
+                                      <p className="font-semibold">{t('systemModal.corsError.fixInstruction')}</p>
+                                      <ol className="list-decimal list-inside space-y-2 pl-2">
+                                          <li>{t('systemModal.corsError.step1')}</li>
+                                          <li>{t('systemModal.corsError.step2')}</li>
+                                          <li>{t('systemModal.corsError.step3')} <code className="text-xs bg-orange-100 p-1 rounded font-mono">{window.location.origin}</code></li>
+                                          <li>{t('systemModal.corsError.step4')}</li>
+                                      </ol>
+                                      <p>{t('systemModal.corsError.afterFix')}</p>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                    </div>
+                  </section>
+                ) : fetchError ? (
                   <section className="bg-white py-16 sm:py-20">
                     <div className="container mx-auto px-4 sm:px-6">
                       <div className="text-center py-16 bg-red-50 border border-red-200 rounded-lg">

@@ -5,12 +5,6 @@ import type { User } from '@supabase/supabase-js';
 
 export { User };
 
-// FIX: Added the missing PropertyStatus enum which is used in PropertyCard.tsx.
-export enum PropertyStatus {
-  New = 'Novo',
-  Updated = 'Atualizado',
-}
-
 export interface Profile {
   id: string; // UUID from auth.users
   nome_completo: string;

@@ -463,7 +463,17 @@ const ptTranslations = {
     "cancelButton": "Cancelar",
     "fetchError": "Não foi possível carregar os anúncios. Por favor, tente recarregar a página.",
     "editSuccessMessage": "Anúncio atualizado com sucesso!",
-    "errorDetails": "Detalhes do erro"
+    "errorDetails": "Detalhes do erro",
+    "corsError": {
+      "title": "Ação Necessária: Problema de Conexão com o Servidor",
+      "description": "O site não conseguiu se comunicar com o banco de dados. Isso geralmente é causado por uma configuração de segurança (CORS) que precisa ser ajustada no seu painel do Supabase.",
+      "fixInstruction": "Para resolver, por favor, siga estes passos:",
+      "step1": "Acesse seu projeto no Supabase.",
+      "step2": "No menu esquerdo, vá para 'Project Settings' (ícone de engrenagem) e depois clique em 'API'.",
+      "step3": "Role para baixo até a seção 'CORS configuration' e adicione a seguinte URL à lista de origens permitidas:",
+      "step4": "Salve as alterações.",
+      "afterFix": "Após salvar, recarregue esta página. Os anúncios deverão aparecer."
+    }
   },
   "documentsForSalePage": {
     "title": "Documentos Necessários para a Venda",
@@ -967,7 +977,17 @@ const enTranslations = {
     "cancelButton": "Cancel",
     "fetchError": "Could not load ads. Please try reloading the page.",
     "editSuccessMessage": "Ad updated successfully!",
-    "errorDetails": "Error details"
+    "errorDetails": "Error details",
+    "corsError": {
+      "title": "Action Required: Server Connection Issue",
+      "description": "The website could not communicate with the database. This is usually caused by a security setting (CORS) that needs to be adjusted in your Supabase dashboard.",
+      "fixInstruction": "To resolve this, please follow these steps:",
+      "step1": "Go to your project in Supabase.",
+      "step2": "In the left menu, go to 'Project Settings' (gear icon) and then click 'API'.",
+      "step3": "Scroll down to the 'CORS configuration' section and add the following URL to the list of allowed origins:",
+      "step4": "Save the changes.",
+      "afterFix": "After saving, reload this page. The listings should now appear."
+    }
   },
   "documentsForSalePage": {
     "title": "Necessary Documents for Sale",
@@ -1471,7 +1491,17 @@ const esTranslations = {
     "cancelButton": "Cancelar",
     "fetchError": "No se pudieron cargar los anuncios. Por favor, intenta recargar la página.",
     "editSuccessMessage": "¡Anuncio actualizado con éxito!",
-    "errorDetails": "Detalles del error"
+    "errorDetails": "Detalles del error",
+    "corsError": {
+      "title": "Acción Requerida: Problema de Conexión con el Servidor",
+      "description": "El sitio web no pudo comunicarse con la base de datos. Esto generalmente es causado por una configuración de seguridad (CORS) que necesita ser ajustada en tu panel de Supabase.",
+      "fixInstruction": "Para resolverlo, por favor, sigue estos pasos:",
+      "step1": "Accede a tu proyecto en Supabase.",
+      "step2": "En el menú izquierdo, ve a 'Project Settings' (icono de engranaje) y luego haz clic en 'API'.",
+      "step3": "Desplázate hacia abajo hasta la sección 'CORS configuration' y añade la siguiente URL a la lista de orígenes permitidos:",
+      "step4": "Guarda los cambios.",
+      "afterFix": "Después de guardar, recarga esta página. Los anuncios deberían aparecer."
+    }
   },
   "documentsForSalePage": {
     "title": "Documentos Necesarios para la Venta",

@@ -2,7 +2,6 @@
 
 import React from 'react';
 import type { Property } from '../types';
-import { PropertyStatus } from '../types';
 import LocationIcon from './icons/LocationIcon';
 import BedIcon from './icons/BedIcon';
 import BathIcon from './icons/BathIcon';
@@ -18,11 +17,6 @@ interface PropertyCardProps {
   onToggleFavorite: (id: number) => void;
   onContactClick: (property: Property) => void;
 }
-
-const statusColorMap = {
-  [PropertyStatus.New]: 'bg-brand-status-green',
-  [PropertyStatus.Updated]: 'bg-brand-status-orange',
-};
 
 const currencyConfig = {
   pt: { locale: 'pt-BR', currency: 'BRL' },
@@ -49,11 +43,6 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, onViewDetails, is
     <div className="w-full bg-white rounded-lg shadow-md overflow-hidden transform transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-xl flex flex-col border border-gray-200">
       <div className="relative cursor-pointer" onClick={() => onViewDetails(property.id)}>
         <img src={imageSrc} alt={property.title} className="w-full h-56 object-cover aspect-video" />
-        {property.status && (
-          <span className={`absolute top-3 left-3 text-white text-xs font-bold px-3 py-1 rounded-full ${statusColorMap[property.status as keyof typeof statusColorMap]}`}>
-            {property.status}
-          </span>
-        )}
         <button
           onClick={(e) => {
             e.stopPropagation(); // Impede que o clique no botão acione o clique no card
