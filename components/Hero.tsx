@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useRef, useEffect } from 'react';
 import SearchIcon from './icons/SearchIcon';
 import ChevronDownIcon from './icons/ChevronDownIcon';
@@ -15,6 +16,8 @@ interface HeroProps {
   onGeolocationError: () => void;
   onSearchSubmit: (query: string) => void;
 }
+
+const ai = new GoogleGenAI({ apiKey: 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
 
 const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeolocationError, onSearchSubmit }) => {
   const [activeTab, setActiveTab] = useState('comprar');
@@ -37,7 +40,6 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
 
     const generateTitle = async () => {
       try {
-        const ai = new GoogleGenAI({ apiKey: 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
         const prompt = t('hero.geminiPrompt');
         
         const response = await ai.models.generateContent({

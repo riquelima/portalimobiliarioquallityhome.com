@@ -1,7 +1,5 @@
 
 
-
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -238,22 +236,17 @@ const App: React.FC = () => {
     console.time('fetchAllData');
 
     try {
-        const baseSelectQuery = '*, midias_imovel(*), perfis:anunciante_id(id, nome_completo, telefone, url_foto_perfil)';
-
-        let query = supabase.from('imoveis').select(baseSelectQuery);
-        
+        // Step 1: Fetch base property data
+        let propertyQuery = supabase.from('imoveis').select('*');
         if (currentUser) {
-            // Fetch all active properties OR properties belonging to the current user in a single query.
-            query = query.or(`status.eq.ativo,anunciante_id.eq.${currentUser.id}`);
+            propertyQuery = propertyQuery.or(`status.eq.ativo,anunciante_id.eq.${currentUser.id}`);
         } else {
-            // For guests, fetch only active properties.
-            query = query.eq('status', 'ativo');
+            propertyQuery = propertyQuery.eq('status', 'ativo');
         }
-
-        const { data: propertiesData, error: propertiesError } = await query;
+        const { data: propertiesData, error: propertiesError } = await propertyQuery;
 
         if (propertiesError) throw propertiesError;
-        
+
         if (!propertiesData || propertiesData.length === 0) {
             setProperties([]);
             setMyAds([]);
@@ -267,15 +260,41 @@ const App: React.FC = () => {
             return;
         }
 
-        // Adapt the pre-joined data into the final Property array
+        const propertyIds = propertiesData.map(p => p.id);
+        const announcerIds = [...new Set(propertiesData.map(p => p.anunciante_id).filter(id => id))];
+
+        // Step 2: Fetch related data in batches
+        const [mediaRes, profilesRes] = await Promise.all([
+            supabase.from('midias_imovel').select('*').in('imovel_id', propertyIds),
+            announcerIds.length > 0 ? supabase.from('perfis').select('*').in('id', announcerIds) : Promise.resolve({ data: [], error: null })
+        ]);
+
+        const { data: mediaData, error: mediaError } = mediaRes;
+        const { data: profilesData, error: profilesError } = profilesRes;
+
+        if (mediaError) console.error('Error fetching media:', mediaError.message);
+        if (profilesError) console.error('Error fetching profiles:', profilesError.message);
+
+        // Step 3: Combine data on the client side
+        const profilesMap = new Map(profilesData?.map(p => [p.id, p]));
+        const mediaMap = new Map<number, Media[]>();
+        mediaData?.forEach(m => {
+            if (!mediaMap.has(m.imovel_id)) {
+                mediaMap.set(m.imovel_id, []);
+            }
+            mediaMap.get(m.imovel_id)!.push(m);
+        });
+
         const adaptedProperties = propertiesData.map((db: any): Property => {
-            const ownerProfile = db.perfis ? {
-                ...db.perfis,
-                phone: db.perfis.telefone
+            // FIX: Explicitly cast ownerProfileData to Profile | undefined to resolve type errors.
+            const ownerProfileData = (db.anunciante_id ? profilesMap.get(db.anunciante_id) : undefined) as Profile | undefined;
+            const ownerProfile = ownerProfileData ? {
+                ...ownerProfileData,
+                phone: ownerProfileData.telefone,
             } : undefined;
             
-            const propertyMedia = db.midias_imovel || [];
-            
+            const propertyMedia = mediaMap.get(db.id) || [];
+
             return {
               ...db,
               title: db.titulo,
@@ -297,7 +316,7 @@ const App: React.FC = () => {
         setProperties(adaptedProperties);
         setMyAds(currentUser ? adaptedProperties.filter(p => p.anunciante_id === currentUser.id) : []);
 
-        // Fetch user-specific data (favorites, chats)
+        // Step 4: Fetch user-specific data (favorites, chats)
         if (currentUser) {
             const { data: favoritesData, error: favoritesError } = await supabase
                 .from('favoritos_usuario')

@@ -1,4 +1,5 @@
 
+
 import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 
 // Translations are embedded directly to avoid module resolution issues.
@@ -77,7 +78,10 @@ const ptTranslations = {
     "title": "Imóveis em Destaque",
     "foundTitle": "Imóveis Encontrados",
     "description": "Explore nossa seleção exclusiva de imóveis que combinam luxo, conforto e localização privilegiada.",
-    "noResults": "Nenhum imóvel encontrado no momento."
+    "noResults": {
+      "title": "Nenhum Imóvel em Destaque",
+      "description": "Parece que não há imóveis disponíveis no momento. Por favor, volte mais tarde ou publique o seu!"
+    }
   },
   "propertyCard": {
     "bedrooms": "Quartos",
@@ -578,7 +582,10 @@ const enTranslations = {
     "title": "Featured Properties",
     "foundTitle": "Properties Found",
     "description": "Explore our exclusive selection of properties that combine luxury, comfort, and prime location.",
-    "noResults": "No properties found at the moment."
+    "noResults": {
+      "title": "No Featured Properties",
+      "description": "It seems there are no properties available at the moment. Please check back later or publish your own!"
+    }
   },
   "propertyCard": {
     "bedrooms": "Beds",
@@ -1079,7 +1086,10 @@ const esTranslations = {
     "title": "Inmuebles Destacados",
     "foundTitle": "Inmuebles Encontrados",
     "description": "Explora nuestra selección exclusiva de inmuebles que combinan lujo, confort y una ubicación privilegiada.",
-    "noResults": "No se encontraron propiedades por el momento."
+    "noResults": {
+      "title": "No hay Inmuebles Destacados",
+      "description": "Parece que no hay inmuebles disponibles en este momento. ¡Por favor, vuelve más tarde o publica el tuyo!"
+    }
   },
   "propertyCard": {
     "bedrooms": "Hab.",

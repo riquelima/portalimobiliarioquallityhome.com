@@ -4,6 +4,7 @@
 
 
 
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -56,6 +57,8 @@ interface PublishJourneyPageProps {
   navigateHome: () => void;
   onAccessClick: () => void;
 }
+
+const ai = new GoogleGenAI({ apiKey: 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
 
 const formatPrice = (price: number | null | undefined): string => {
     if (price === null || price === undefined || isNaN(price)) return '';
@@ -511,7 +514,6 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         if (!formData.title.trim()) return;
         setIsGeneratingTitle(true);
         try {
-            const ai = new GoogleGenAI({ apiKey: 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
             const prompt = t('publishJourney.detailsForm.aiTitlePrompt', { title: formData.title });
             
             const response = await ai.models.generateContent({
@@ -547,7 +549,6 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         `;
         
         try {
-            const ai = new GoogleGenAI({ apiKey: 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
             const prompt = t('publishJourney.detailsForm.aiDescriptionPrompt', { details });
 
             const response = await ai.models.generateContent({
