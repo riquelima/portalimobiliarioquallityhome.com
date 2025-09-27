@@ -235,35 +235,21 @@ const App: React.FC = () => {
     try {
         const baseSelectQuery = '*, midias_imovel(*), perfis:anunciante_id(id, nome_completo, telefone, url_foto_perfil)';
 
-        // Step 1: Fetch all active properties with their related media and profiles.
-        const { data: activeProperties, error: activeError } = await supabase
-            .from('imoveis')
-            .select(baseSelectQuery)
-            .eq('status', 'ativo');
-
-        if (activeError) throw activeError;
-
-        let propertiesData = activeProperties || [];
-
-        // Step 2: If a user is logged in, fetch their properties to include their own ads (even inactive ones).
+        let query = supabase.from('imoveis').select(baseSelectQuery);
+        
         if (currentUser) {
-            const { data: userProperties, error: userError } = await supabase
-                .from('imoveis')
-                .select(baseSelectQuery)
-                .eq('anunciante_id', currentUser.id);
-
-            if (userError) {
-                console.error("Error fetching user's properties:", userError);
-            } else if (userProperties) {
-                // Merge active properties with the user's own properties, avoiding duplicates.
-                const propertyMap = new Map<number, any>();
-                propertiesData.forEach(p => propertyMap.set(p.id, p));
-                userProperties.forEach(p => propertyMap.set(p.id, p)); // User's version overwrites public one
-                propertiesData = Array.from(propertyMap.values());
-            }
+            // Fetch all active properties OR properties belonging to the current user in a single query.
+            query = query.or(`status.eq.ativo,anunciante_id.eq.${currentUser.id}`);
+        } else {
+            // For guests, fetch only active properties.
+            query = query.eq('status', 'ativo');
         }
 
-        if (propertiesData.length === 0) {
+        const { data: propertiesData, error: propertiesError } = await query;
+
+        if (propertiesError) throw propertiesError;
+        
+        if (!propertiesData || propertiesData.length === 0) {
             setProperties([]);
             setMyAds([]);
             if (currentUser) {
@@ -276,7 +262,7 @@ const App: React.FC = () => {
             return;
         }
 
-        // Step 3: Adapt the pre-joined data into the final Property array
+        // Adapt the pre-joined data into the final Property array
         const adaptedProperties = propertiesData.map((db: any): Property => {
             const ownerProfile = db.perfis ? {
                 ...db.perfis,
@@ -306,7 +292,7 @@ const App: React.FC = () => {
         setProperties(adaptedProperties);
         setMyAds(currentUser ? adaptedProperties.filter(p => p.anunciante_id === currentUser.id) : []);
 
-        // Step 4: Fetch user-specific data (favorites, chats)
+        // Fetch user-specific data (favorites, chats)
         if (currentUser) {
             const { data: favoritesData, error: favoritesError } = await supabase
                 .from('favoritos_usuario')
