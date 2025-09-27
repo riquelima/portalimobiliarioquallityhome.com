@@ -1,6 +1,9 @@
 
 
 
+
+
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -21,8 +24,6 @@ import { GoogleGenAI } from '@google/genai';
 import AIIcon from './icons/AIIcon';
 import SpinnerIcon from './icons/SpinnerIcon';
 import WarningIcon from './icons/WarningIcon';
-
-const GEMINI_API_KEY = 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk';
 
 type MediaItem = File | (Media & { type: 'existing' });
 
@@ -510,7 +511,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         if (!formData.title.trim()) return;
         setIsGeneratingTitle(true);
         try {
-            const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+            const ai = new GoogleGenAI({ apiKey: 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
             const prompt = t('publishJourney.detailsForm.aiTitlePrompt', { title: formData.title });
             
             const response = await ai.models.generateContent({
@@ -546,7 +547,7 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
         `;
         
         try {
-            const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+            const ai = new GoogleGenAI({ apiKey: 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
             const prompt = t('publishJourney.detailsForm.aiDescriptionPrompt', { details });
 
             const response = await ai.models.generateContent({

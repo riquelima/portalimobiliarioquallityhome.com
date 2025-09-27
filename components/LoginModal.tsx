@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import CloseIcon from './icons/CloseIcon';
@@ -28,23 +29,20 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, loginIntent })
       localStorage.removeItem('loginIntent');
     }
   };
-  
-  if (!isOpen) {
-    return null;
-  }
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black transition-all duration-300 ease-in-out ${isOpen ? 'bg-opacity-50 backdrop-blur-sm' : 'bg-opacity-0 pointer-events-none'}`}
       aria-labelledby="login-modal-title"
       role="dialog"
       aria-modal="true"
+      onClick={onClose}
     >
-      {/* Backdrop */}
-      <div className="absolute inset-0" onClick={onClose} aria-hidden="true"></div>
-
       {/* Modal Content */}
-      <div className="relative bg-white rounded-lg shadow-xl w-11/2 max-w-md p-6 sm:p-8 m-4 transform transition-all">
+      <div 
+        onClick={(e) => e.stopPropagation()}
+        className={`relative bg-white rounded-lg shadow-xl w-11/12 max-w-md p-6 sm:p-8 m-4 transform transition-all duration-300 ease-out ${isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+      >
         <button 
           onClick={onClose} 
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"

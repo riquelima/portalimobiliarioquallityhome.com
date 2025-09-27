@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -22,6 +24,7 @@ import AllListingsPage from './components/AllListingsPage';
 import ContactModal from './components/ContactModal';
 import GuideToSellPage from './components/GuideToSellPage';
 import DocumentsForSalePage from './components/DocumentsForSalePage';
+import SplashScreen from './components/SplashScreen';
 import { useLanguage } from './contexts/LanguageContext';
 import { supabase } from './supabaseClient';
 import type { User, Property, ChatSession, Message, Profile, Media } from './types';
@@ -212,6 +215,8 @@ const App: React.FC = () => {
   const debounceTimerRef = useRef<number | null>(null);
   const [contactModalProperty, setContactModalProperty] = useState<Property | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [showSplash, setShowSplash] = useState(true);
+  const [isSplashFading, setIsSplashFading] = useState(false);
 
   const totalUnreadChatsCount = chatSessions.filter(s => s.unreadCount > 0).length;
 
@@ -349,6 +354,27 @@ const App: React.FC = () => {
   }, [t, showModal]);
   
   const navigateToPublishJourney = () => setPageState({ page: 'publish-journey', userLocation: null });
+  
+  // Scroll to top on page change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [pageState.page, pageState.propertyId, pageState.searchQuery, pageState.chatSessionId]);
+
+  // Splash screen effect
+  useEffect(() => {
+    const splashTimer = setTimeout(() => {
+      setIsSplashFading(true);
+    }, 2000); // Splash screen visible for 2 seconds
+
+    const fadeTimer = setTimeout(() => {
+      setShowSplash(false);
+    }, 2500); // 2s visibility + 0.5s fade out
+
+    return () => {
+      clearTimeout(splashTimer);
+      clearTimeout(fadeTimer);
+    };
+  }, []);
 
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -681,89 +707,100 @@ const App: React.FC = () => {
       onNavigateToAllListings: navigateToAllListings, unreadCount: totalUnreadChatsCount,
       navigateToGuideToSell, navigateToDocumentsForSale,
     };
+    
+    const pageKey = `${pageState.page}-${pageState.propertyId}-${pageState.chatSessionId}-${pageState.searchQuery}`;
 
-    switch (pageState.page) {
-      case 'map': return <MapDrawPage onBack={navigateHome} userLocation={pageState.userLocation} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} properties={properties} onContactClick={openContactModal} />;
-      case 'publish': return <PublishAdPage onBack={navigateHome} onPublishAdClick={handlePublishClick} onOpenLoginModal={() => openLoginModal('publish')} onNavigateToJourney={navigateToPublishJourney} {...headerProps} />;
-      case 'publish-journey': case 'edit-journey': return <PublishJourneyPage propertyToEdit={pageState.page === 'edit-journey' ? pageState.propertyToEdit : null} onBack={navigateHome} onAddProperty={handleAddProperty} onUpdateProperty={handleUpdateProperty} onPublishError={handlePublishError} onRequestModal={showModal} onOpenLoginModal={openLoginModal} {...headerProps} />;
-      case 'searchResults':
-        const query = pageState.searchQuery?.toLowerCase() ?? '';
-        const filteredProperties = query ? properties.filter(p => p.title.toLowerCase().includes(query) || p.address.toLowerCase().includes(query)) : [];
-        return <SearchResultsPage onBack={navigateHome} searchQuery={pageState.searchQuery ?? ''} properties={filteredProperties} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} onContactClick={openContactModal} {...headerProps} />;
-      case 'propertyDetail':
-        const property = [...properties, ...myAds].find(p => p.id === pageState.propertyId);
-        if (!property) { navigateHome(); return null; }
-        return <PropertyDetailPage property={property} onBack={() => window.history.back()} isFavorite={favorites.includes(property.id)} onToggleFavorite={toggleFavorite} onStartChat={handleStartChat} {...headerProps} />;
-      case 'favorites':
-          const favoriteProperties = properties.filter(p => favorites.includes(p.id));
-          return <FavoritesPage onBack={navigateHome} properties={favoriteProperties} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} onContactClick={openContactModal} {...headerProps} />;
-      case 'chatList':
-        if (!user) { navigateHome(); return null; }
-        return <ChatListPage onBack={navigateHome} chatSessions={chatSessions.filter(s => s.participants[user.id])} properties={properties} onNavigateToChat={navigateToChat} {...headerProps} />;
-      case 'chat':
-        const session = chatSessions.find(s => s.id === pageState.chatSessionId);
-        const propertyForChat = properties.find(p => p.id === session?.imovel_id);
-        if (!session || !user || !propertyForChat) { navigateHome(); return null; }
-        return <ChatPage onBack={navigateToChatList} user={user} session={session} property={propertyForChat} onSendMessage={handleSendMessage} onMarkAsRead={handleMarkAsRead} />;
-      case 'myAds':
-        if (!user) { navigateHome(); return null; }
-        return <MyAdsPage onBack={navigateHome} userProperties={myAds} onViewDetails={navigateToPropertyDetail} onDeleteProperty={handleRequestDeleteProperty} onEditProperty={navigateToEditJourney} {...headerProps} />;
-      case 'allListings':
-        return <AllListingsPage onBack={navigateHome} properties={properties} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} onSearchSubmit={navigateToSearchResults} onGeolocationError={openGeoErrorModal} onContactClick={openContactModal} {...headerProps} />;
-       case 'guideToSell': return <GuideToSellPage onBack={navigateHome} {...headerProps} />;
-      case 'documentsForSale': return <DocumentsForSalePage onBack={navigateHome} {...headerProps} />;
-      case 'home': default:
-        return (
-          <div className="bg-white font-sans text-brand-dark">
-            <Header {...headerProps} />
-            <main>
-              <Hero onDrawOnMapClick={() => navigateToMap()} onSearchNearMe={(location) => navigateToMap(location)} onGeolocationError={openGeoErrorModal} onSearchSubmit={navigateToSearchResults} />
-              {fetchError ? (
-                <section className="bg-white py-16 sm:py-20">
-                  <div className="container mx-auto px-4 sm:px-6">
-                    <div className="text-center py-16 bg-red-50 border border-red-200 rounded-lg">
-                        <ErrorIcon className="w-12 h-12 text-brand-red mx-auto mb-4" />
-                        <p className="text-brand-red font-semibold text-lg mb-2">{t('systemModal.errorTitle')}</p>
-                        <p className="text-brand-gray">{t('systemModal.fetchError')}</p>
-                        <p className="mt-4 text-sm text-gray-600 bg-red-100 p-3 rounded-md inline-block max-w-full overflow-x-auto">
-                            <strong className="font-bold">{t('systemModal.errorDetails')}:</strong> <code className="text-xs">{fetchError}</code>
-                        </p>
+    const pageContent = () => {
+      switch (pageState.page) {
+        case 'map': return <MapDrawPage onBack={navigateHome} userLocation={pageState.userLocation} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} properties={properties} onContactClick={openContactModal} />;
+        case 'publish': return <PublishAdPage onBack={navigateHome} onPublishAdClick={handlePublishClick} onOpenLoginModal={() => openLoginModal('publish')} onNavigateToJourney={navigateToPublishJourney} {...headerProps} />;
+        case 'publish-journey': case 'edit-journey': return <PublishJourneyPage propertyToEdit={pageState.page === 'edit-journey' ? pageState.propertyToEdit : null} onBack={navigateHome} onAddProperty={handleAddProperty} onUpdateProperty={handleUpdateProperty} onPublishError={handlePublishError} onRequestModal={showModal} onOpenLoginModal={openLoginModal} {...headerProps} />;
+        case 'searchResults':
+          const query = pageState.searchQuery?.toLowerCase() ?? '';
+          const filteredProperties = query ? properties.filter(p => p.title.toLowerCase().includes(query) || p.address.toLowerCase().includes(query)) : [];
+          return <SearchResultsPage onBack={navigateHome} searchQuery={pageState.searchQuery ?? ''} properties={filteredProperties} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} onContactClick={openContactModal} {...headerProps} />;
+        case 'propertyDetail':
+          const property = [...properties, ...myAds].find(p => p.id === pageState.propertyId);
+          if (!property) { navigateHome(); return null; }
+          return <PropertyDetailPage property={property} onBack={() => window.history.back()} isFavorite={favorites.includes(property.id)} onToggleFavorite={toggleFavorite} onStartChat={handleStartChat} {...headerProps} />;
+        case 'favorites':
+            const favoriteProperties = properties.filter(p => favorites.includes(p.id));
+            return <FavoritesPage onBack={navigateHome} properties={favoriteProperties} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} onContactClick={openContactModal} {...headerProps} />;
+        case 'chatList':
+          if (!user) { navigateHome(); return null; }
+          return <ChatListPage onBack={navigateHome} chatSessions={chatSessions.filter(s => s.participants[user.id])} properties={properties} onNavigateToChat={navigateToChat} {...headerProps} />;
+        case 'chat':
+          const session = chatSessions.find(s => s.id === pageState.chatSessionId);
+          const propertyForChat = properties.find(p => p.id === session?.imovel_id);
+          if (!session || !user || !propertyForChat) { navigateHome(); return null; }
+          return <ChatPage onBack={navigateToChatList} user={user} session={session} property={propertyForChat} onSendMessage={handleSendMessage} onMarkAsRead={handleMarkAsRead} />;
+        case 'myAds':
+          if (!user) { navigateHome(); return null; }
+          return <MyAdsPage onBack={navigateHome} userProperties={myAds} onViewDetails={navigateToPropertyDetail} onDeleteProperty={handleRequestDeleteProperty} onEditProperty={navigateToEditJourney} {...headerProps} />;
+        case 'allListings':
+          return <AllListingsPage onBack={navigateHome} properties={properties} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} onSearchSubmit={navigateToSearchResults} onGeolocationError={openGeoErrorModal} onContactClick={openContactModal} {...headerProps} />;
+         case 'guideToSell': return <GuideToSellPage onBack={navigateHome} {...headerProps} />;
+        case 'documentsForSale': return <DocumentsForSalePage onBack={navigateHome} {...headerProps} />;
+        case 'home': default:
+          return (
+            <div className="bg-white font-sans text-brand-dark">
+              <Header {...headerProps} />
+              <main>
+                <Hero onDrawOnMapClick={() => navigateToMap()} onSearchNearMe={(location) => navigateToMap(location)} onGeolocationError={openGeoErrorModal} onSearchSubmit={navigateToSearchResults} />
+                {fetchError ? (
+                  <section className="bg-white py-16 sm:py-20">
+                    <div className="container mx-auto px-4 sm:px-6">
+                      <div className="text-center py-16 bg-red-50 border border-red-200 rounded-lg">
+                          <ErrorIcon className="w-12 h-12 text-brand-red mx-auto mb-4" />
+                          <p className="text-brand-red font-semibold text-lg mb-2">{t('systemModal.errorTitle')}</p>
+                          <p className="text-brand-gray">{t('systemModal.fetchError')}</p>
+                          <p className="mt-4 text-sm text-gray-600 bg-red-100 p-3 rounded-md inline-block max-w-full overflow-x-auto">
+                              <strong className="font-bold">{t('systemModal.errorDetails')}:</strong> <code className="text-xs">{fetchError}</code>
+                          </p>
+                      </div>
                     </div>
+                  </section>
+                ) : (
+                  <PropertyListings properties={properties} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} isLoading={isLoading} onContactClick={openContactModal} />
+                )}
+              </main>
+              <footer className="bg-brand-light-gray text-brand-gray py-8 text-center mt-20">
+                <div className="container mx-auto">
+                  <p>&copy; {new Date().getFullYear()} {t('footer.text')}</p>
+                  <div className="mt-4">
+                    <a href="https://www.instagram.com/portalimobiliarioquallityhome/" target="_blank" rel="noopener noreferrer" aria-label="Siga-nos no Instagram" className="inline-block hover:opacity-75 transition-opacity">
+                      <img src="https://cdn-icons-png.flaticon.com/512/3621/3621435.png" alt="Instagram" className="h-8 w-8" />
+                    </a>
                   </div>
-                </section>
-              ) : (
-                <PropertyListings properties={properties} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} isLoading={isLoading} onContactClick={openContactModal} />
-              )}
-            </main>
-            <footer className="bg-brand-light-gray text-brand-gray py-8 text-center mt-20">
-              <div className="container mx-auto">
-                <p>&copy; {new Date().getFullYear()} {t('footer.text')}</p>
-                <div className="mt-4">
-                  <a href="https://www.instagram.com/portalimobiliarioquallityhome/" target="_blank" rel="noopener noreferrer" aria-label="Siga-nos no Instagram" className="inline-block hover:opacity-75 transition-opacity">
-                    <img src="https://cdn-icons-png.flaticon.com/512/3621/3621435.png" alt="Instagram" className="h-8 w-8" />
-                  </a>
                 </div>
-              </div>
-            </footer>
-          </div>
-        );
-    }
+              </footer>
+            </div>
+          );
+      }
+    };
+    
+    return <div key={pageKey} className="page-fade-in">{pageContent()}</div>;
   };
 
   return (
     <>
-      {renderCurrentPage()}
-      <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} loginIntent={loginIntent} />
-      <GeolocationErrorModal isOpen={isGeoErrorModalOpen} onClose={closeGeoErrorModal} />
-      <SystemModal {...modalConfig} onClose={hideModal} />
-      <ContactModal isOpen={!!contactModalProperty} onClose={closeContactModal} owner={contactModalProperty?.owner} propertyTitle={contactModalProperty?.title || ''}
-        onStartChat={() => {
-          if (contactModalProperty) {
-            handleStartChat(contactModalProperty);
-            closeContactModal();
-          }
-        }}
-      />
+      {showSplash && <SplashScreen isFadingOut={isSplashFading} />}
+      {!showSplash && (
+        <>
+          {renderCurrentPage()}
+          <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} loginIntent={loginIntent} />
+          <GeolocationErrorModal isOpen={isGeoErrorModalOpen} onClose={closeGeoErrorModal} />
+          <SystemModal {...modalConfig} onClose={hideModal} />
+          <ContactModal isOpen={!!contactModalProperty} onClose={closeContactModal} owner={contactModalProperty?.owner} propertyTitle={contactModalProperty?.title || ''}
+            onStartChat={() => {
+              if (contactModalProperty) {
+                handleStartChat(contactModalProperty);
+                closeContactModal();
+              }
+            }}
+          />
+        </>
+      )}
     </>
   );
 };
