@@ -216,6 +216,7 @@ const App: React.FC = () => {
   const [isCorsError, setIsCorsError] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const [isSplashFading, setIsSplashFading] = useState(false);
+  const [deviceLocation, setDeviceLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   const totalUnreadChatsCount = chatSessions.filter(s => s.unreadCount > 0).length;
 
@@ -398,6 +399,26 @@ const App: React.FC = () => {
     };
   }, []);
 
+  // Geolocation Request on App Load
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setDeviceLocation({ lat: latitude, lng: longitude });
+        },
+        (error) => {
+          console.error("Geolocation error on app load:", error);
+          if (!sessionStorage.getItem('geolocationErrorShown')) {
+            openGeoErrorModal();
+            sessionStorage.setItem('geolocationErrorShown', 'true');
+          }
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 600000 }
+      );
+    }
+  }, []);
+
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       const currentUser = session?.user ?? null;
@@ -437,6 +458,8 @@ const App: React.FC = () => {
             setLoginIntent('default');
         }
       } else {
+        // Clear all user-specific state on logout/session expiry
+        setUser(null);
         setProfile(null);
         setFavorites([]);
         setChatSessions([]);
@@ -780,7 +803,7 @@ const App: React.FC = () => {
       switch (pageState.page) {
         case 'map': return <MapDrawPage onBack={navigateHome} userLocation={pageState.userLocation} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} properties={properties} onContactClick={openContactModal} />;
         case 'publish': return <PublishAdPage onBack={navigateHome} onPublishAdClick={handlePublishClick} onOpenLoginModal={() => openLoginModal('publish')} onNavigateToJourney={navigateToPublishJourney} {...headerProps} />;
-        case 'publish-journey': case 'edit-journey': return <PublishJourneyPage propertyToEdit={pageState.page === 'edit-journey' ? pageState.propertyToEdit : null} onBack={navigateHome} onAddProperty={handleAddProperty} onUpdateProperty={handleUpdateProperty} onPublishError={handlePublishError} onRequestModal={showModal} onOpenLoginModal={openLoginModal} {...headerProps} />;
+        case 'publish-journey': case 'edit-journey': return <PublishJourneyPage deviceLocation={deviceLocation} propertyToEdit={pageState.page === 'edit-journey' ? pageState.propertyToEdit : null} onBack={navigateHome} onAddProperty={handleAddProperty} onUpdateProperty={handleUpdateProperty} onPublishError={handlePublishError} onRequestModal={showModal} onOpenLoginModal={openLoginModal} {...headerProps} />;
         case 'searchResults':
           const query = pageState.searchQuery?.toLowerCase() ?? '';
           const filteredProperties = query ? properties.filter(p => p.title.toLowerCase().includes(query) || p.address.toLowerCase().includes(query)) : [];
@@ -804,7 +827,7 @@ const App: React.FC = () => {
           if (!user) { navigateHome(); return null; }
           return <MyAdsPage onBack={navigateHome} userProperties={myAds} onViewDetails={navigateToPropertyDetail} onDeleteProperty={handleRequestDeleteProperty} onEditProperty={navigateToEditJourney} {...headerProps} />;
         case 'allListings':
-          return <AllListingsPage onBack={navigateHome} properties={properties} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} onSearchSubmit={navigateToSearchResults} onGeolocationError={openGeoErrorModal} onContactClick={openContactModal} {...headerProps} />;
+          return <AllListingsPage onBack={navigateHome} deviceLocation={deviceLocation} properties={properties} onViewDetails={navigateToPropertyDetail} favorites={favorites} onToggleFavorite={toggleFavorite} onSearchSubmit={navigateToSearchResults} onGeolocationError={openGeoErrorModal} onContactClick={openContactModal} {...headerProps} />;
          case 'guideToSell': return <GuideToSellPage onBack={navigateHome} {...headerProps} />;
         case 'documentsForSale': return <DocumentsForSalePage onBack={navigateHome} {...headerProps} />;
         case 'home': default:
@@ -812,7 +835,7 @@ const App: React.FC = () => {
             <div className="bg-white font-sans text-brand-dark">
               <Header {...headerProps} />
               <main>
-                <Hero onDrawOnMapClick={() => navigateToMap()} onSearchNearMe={(location) => navigateToMap(location)} onGeolocationError={openGeoErrorModal} onSearchSubmit={navigateToSearchResults} />
+                <Hero deviceLocation={deviceLocation} onDrawOnMapClick={() => navigateToMap()} onSearchNearMe={(location) => navigateToMap(location)} onGeolocationError={openGeoErrorModal} onSearchSubmit={navigateToSearchResults} />
                 {isCorsError ? (
                   <section className="bg-white py-16 sm:py-20">
                     <div className="container mx-auto px-4 sm:px-6">

@@ -1,7 +1,5 @@
 
 
-
-
 import React, { useState, useRef, useEffect } from 'react';
 import SearchIcon from './icons/SearchIcon';
 import ChevronDownIcon from './icons/ChevronDownIcon';
@@ -15,14 +13,15 @@ interface HeroProps {
   onSearchNearMe: (location: { lat: number, lng: number }) => void;
   onGeolocationError: () => void;
   onSearchSubmit: (query: string) => void;
+  deviceLocation: { lat: number; lng: number } | null;
 }
 
 const ai = new GoogleGenAI({ apiKey: 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
 
-const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeolocationError, onSearchSubmit }) => {
+const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeolocationError, onSearchSubmit, deviceLocation }) => {
   const [activeTab, setActiveTab] = useState('comprar');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isLoadingGeo, setIsLoadingGeo] = useState(false);
+  const [isSearchingNearMe, setIsSearchingNearMe] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const { t, language } = useLanguage();
@@ -100,25 +99,16 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
   };
 
   const handleSearchNearMe = () => {
-    if (!navigator.geolocation) {
-      onGeolocationError();
-      return;
-    }
-    setIsLoadingGeo(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setIsLoadingGeo(false);
-        setIsDropdownOpen(false);
-        onSearchNearMe({ lat: latitude, lng: longitude });
-      },
-      (error) => {
-        console.error("Geolocation error:", error);
-        setIsLoadingGeo(false);
+    setIsDropdownOpen(false);
+    if (deviceLocation) {
+        setIsSearchingNearMe(true);
+        setTimeout(() => { // Simulate small delay for better UX
+            onSearchNearMe(deviceLocation);
+            setIsSearchingNearMe(false);
+        }, 300);
+    } else {
         onGeolocationError();
-      },
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
-    );
+    }
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -192,11 +182,11 @@ const Hero: React.FC<HeroProps> = ({ onDrawOnMapClick, onSearchNearMe, onGeoloca
                   <button 
                     type="button"
                     onClick={handleSearchNearMe}
-                    disabled={isLoadingGeo}
+                    disabled={isSearchingNearMe}
                     className="w-full flex items-center px-4 py-3 text-brand-dark hover:bg-gray-100 transition-colors duration-200 disabled:opacity-50 disabled:cursor-wait"
                   >
                     <GeoIcon className="w-5 h-5 mr-3 text-brand-gray"/>
-                    <span>{isLoadingGeo ? t('hero.loadingLocation') : t('hero.searchNearMe')}</span>
+                    <span>{isSearchingNearMe ? t('hero.loadingLocation') : t('hero.searchNearMe')}</span>
                   </button>
                 </div>
               )}

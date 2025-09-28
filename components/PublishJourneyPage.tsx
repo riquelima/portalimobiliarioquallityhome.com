@@ -1,10 +1,5 @@
 
 
-
-
-
-
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Header from './Header';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -56,6 +51,7 @@ interface PublishJourneyPageProps {
   navigateToDocumentsForSale: () => void;
   navigateHome: () => void;
   onAccessClick: () => void;
+  deviceLocation: { lat: number; lng: number } | null;
 }
 
 const ai = new GoogleGenAI({ apiKey: 'AIzaSyCsX9l10XCu3TtSCU1BSx-qOYrwUKYw2xk' });
@@ -115,7 +111,7 @@ const Stepper: React.FC<{ currentStep: number, setStep: (step: number) => void }
 
 export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => {
     const { t, language } = useLanguage();
-    const { user, profile, onAddProperty, onUpdateProperty, onPublishError, propertyToEdit } = props;
+    const { user, profile, onAddProperty, onUpdateProperty, onPublishError, propertyToEdit, deviceLocation } = props;
     
     // Form State
     const [step, setStep] = useState(1);
@@ -230,6 +226,38 @@ export const PublishJourneyPage: React.FC<PublishJourneyPageProps> = (props) => 
             setFiles(existingMedia);
         }
     }, [propertyToEdit, profile]);
+
+    useEffect(() => {
+      // Auto-fill city from device location for new ads
+      if (!propertyToEdit && deviceLocation && !formData.city) {
+        const reverseGeocode = async () => {
+          try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${deviceLocation.lat}&lon=${deviceLocation.lng}`);
+            const data = await response.json();
+            if (data && data.address) {
+              const city = data.address.city || data.address.town || data.address.village || data.address.city_district;
+              const stateName = data.address.state;
+              const stateMap: { [key: string]: string } = {
+                  'Acre': 'AC', 'Alagoas': 'AL', 'Amapá': 'AP', 'Amazonas': 'AM', 'Bahia': 'BA',
+                  'Ceará': 'CE', 'Distrito Federal': 'DF', 'Espírito Santo': 'ES', 'Goiás': 'GO',
+                  'Maranhão': 'MA', 'Mato Grosso': 'MT', 'Mato Grosso do Sul': 'MS', 'Minas Gerais': 'MG',
+                  'Pará': 'PA', 'Paraíba': 'PB', 'Paraná': 'PR', 'Pernambuco': 'PE', 'Piauí': 'PI',
+                  'Rio de Janeiro': 'RJ', 'Rio Grande do Norte': 'RN', 'Rio Grande do Sul': 'RS',
+                  'Rondônia': 'RO', 'Roraima': 'RR', 'Santa Catarina': 'SC', 'São Paulo': 'SP',
+                  'Sergipe': 'SE', 'Tocantins': 'TO'
+              };
+              const stateAbbr = stateMap[stateName] || stateName;
+              if (city && stateAbbr) {
+                  setFormData(prev => ({ ...prev, city: `${city}, ${stateAbbr}` }));
+              }
+            }
+          } catch (error) {
+            console.error("Reverse geocoding error:", error);
+          }
+        };
+        reverseGeocode();
+      }
+    }, [deviceLocation, propertyToEdit, formData.city]);
     
     const handleCurrencyChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;

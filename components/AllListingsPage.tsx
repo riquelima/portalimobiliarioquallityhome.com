@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './Header';
 import PropertyListings from './PropertyListings';
@@ -28,6 +29,7 @@ interface AllListingsPageProps {
   navigateToGuideToSell: () => void;
   navigateToDocumentsForSale: () => void;
   navigateHome: () => void;
+  deviceLocation: { lat: number; lng: number } | null;
 }
 
 const GOOGLE_MAPS_API_KEY = 'AIzaSyDukeY7JJI9UkHIFbsCZOrjPDRukqvUOfA'; // User provided API key
@@ -42,10 +44,8 @@ const libraries: ('drawing' | 'places' | 'visualization')[] = ['places'];
 const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeSearchQuery, setActiveSearchQuery] = useState('');
   
   const [mapCenter, setMapCenter] = useState<{lat: number, lng: number}>({lat: -12.9777, lng: -38.5016}); // Default to Salvador
-  const [isLoadingGeo, setIsLoadingGeo] = useState(true);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
 
   const { isLoaded, loadError } = useJsApiLoader({
@@ -55,19 +55,10 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   });
 
   useEffect(() => {
-    navigator.geolocation.getCurrentPosition(
-        (position) => {
-            const { latitude, longitude } = position.coords;
-            setMapCenter({lat: latitude, lng: longitude});
-            setIsLoadingGeo(false);
-        },
-        (error) => {
-            console.error("Falha ao obter geolocalização, usando localização padrão:", error);
-            setIsLoadingGeo(false);
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
-  }, []);
+    if (props.deviceLocation) {
+        setMapCenter(props.deviceLocation);
+    }
+  }, [props.deviceLocation]);
   
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchQuery(e.target.value);
@@ -75,15 +66,10 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setActiveSearchQuery(searchQuery);
+    if (searchQuery.trim()) {
+      props.onSearchSubmit(searchQuery);
+    }
   };
-
-  const filteredProperties = props.properties.filter(p => {
-    return activeSearchQuery.trim()
-        ? p.title.toLowerCase().includes(activeSearchQuery.toLowerCase()) ||
-          p.address.toLowerCase().includes(activeSearchQuery.toLowerCase())
-        : true;
-  });
 
   const onMarkerClick = useCallback((property: Property) => {
     setSelectedProperty(property);
@@ -127,7 +113,7 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
         
         <div className="container mx-auto px-4 sm:px-6 mt-8">
             <div className="h-[400px] md:h-[500px] w-full mb-8 rounded-lg overflow-hidden shadow-md relative z-0">
-                {isLoadingGeo || !isLoaded ? (
+                {!isLoaded ? (
                     <div className="w-full h-full bg-gray-200 flex items-center justify-center animate-pulse">
                         <p className="text-brand-gray">{loadError ? 'Error loading map' : t('map.loading')}</p>
                     </div>
@@ -143,7 +129,7 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
                             zoomControl: true
                         }}
                     >
-                        {filteredProperties.map(property => (
+                        {props.properties.map(property => (
                             <Marker 
                                 key={property.id} 
                                 position={{ lat: property.lat, lng: property.lng }}
@@ -179,8 +165,7 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
         </div>
 
         <PropertyListings
-          title={activeSearchQuery ? t('listings.foundTitle') : t('listings.title')}
-          properties={filteredProperties}
+          properties={props.properties}
           onViewDetails={props.onViewDetails}
           favorites={props.favorites}
           onToggleFavorite={props.onToggleFavorite}
