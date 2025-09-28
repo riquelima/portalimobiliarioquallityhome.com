@@ -1,22 +1,28 @@
 
 
-import React from 'react';
+
+import React, { useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import CloseIcon from './icons/CloseIcon';
 import AppleIcon from './icons/AppleIcon';
 import GoogleIcon from './icons/GoogleIcon';
 import { supabase } from '../supabaseClient';
+import SpinnerIcon from './icons/SpinnerIcon';
+import type { ModalConfig } from '../App';
 
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   loginIntent: 'default' | 'publish';
+  showModal: (config: Omit<ModalConfig, 'isOpen'>) => void;
 }
 
-const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, loginIntent }) => {
+const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, loginIntent, showModal }) => {
   const { t } = useLanguage();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleGoogleLogin = async () => {
+    setIsSubmitting(true);
     localStorage.setItem('loginIntent', loginIntent);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -27,7 +33,13 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, loginIntent })
     if (error) {
       console.error('Error logging in with Google:', error.message);
       localStorage.removeItem('loginIntent');
+      showModal({
+        type: 'error',
+        title: t('systemModal.errorTitle'),
+        message: t('loginModal.googleLoginError')
+      });
     }
+    setIsSubmitting(false);
   };
 
   return (
@@ -90,9 +102,14 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, loginIntent })
         <div className="space-y-3">
            <button 
              onClick={handleGoogleLogin}
-             className="w-full max-w-[300px] mx-auto flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-brand-dark hover:bg-gray-50"
+             disabled={isSubmitting}
+             className="w-full max-w-[300px] mx-auto flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-brand-dark hover:bg-gray-50 disabled:opacity-50 disabled:cursor-wait"
            >
-             <GoogleIcon className="w-5 h-5 mr-3" />
+             {isSubmitting ? (
+                <SpinnerIcon className="w-5 h-5 mr-3 animate-spin" />
+             ) : (
+                <GoogleIcon className="w-5 h-5 mr-3" />
+             )}
              <span>{t('loginModal.googleButton')}</span>
            </button>
           <button className="w-full max-w-[300px] mx-auto flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-brand-dark hover:bg-gray-50">

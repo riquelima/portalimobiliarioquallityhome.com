@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -38,7 +39,7 @@ interface PageState {
   propertyToEdit?: Property;
 }
 
-interface ModalConfig {
+export interface ModalConfig {
   isOpen: boolean;
   type: 'success' | 'error' | 'confirm';
   title: string;
@@ -837,7 +838,7 @@ const App: React.FC = () => {
       {!showSplash && (
         <>
           {renderCurrentPage()}
-          <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} loginIntent={loginIntent} />
+          <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} loginIntent={loginIntent} showModal={showModal} />
           <GeolocationErrorModal isOpen={isGeoErrorModalOpen} onClose={closeGeoErrorModal} />
           <SystemModal {...modalConfig} onClose={hideModal} />
           <ContactModal isOpen={!!contactModalProperty} onClose={closeContactModal} owner={contactModalProperty?.owner} propertyTitle={contactModalProperty?.title || ''}

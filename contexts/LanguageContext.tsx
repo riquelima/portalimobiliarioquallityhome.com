@@ -1,5 +1,6 @@
 
 
+
 import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 
 // Translations are embedded directly to avoid module resolution issues.
@@ -174,7 +175,8 @@ const ptTranslations = {
     "continueButton": "Continuar",
     "socialLoginPrompt": "Você também pode",
     "googleButton": "Continuar com Google",
-    "appleButton": "Continuar com Apple"
+    "appleButton": "Continuar com Apple",
+    "googleLoginError": "Falha ao autenticar com o Google. Por favor, tente novamente ou use outro método."
   },
   "publishJourney": {
     "stepper": {
@@ -688,7 +690,8 @@ const enTranslations = {
     "continueButton": "Continue",
     "socialLoginPrompt": "You can also",
     "googleButton": "Continue with Google",
-    "appleButton": "Continue with Apple"
+    "appleButton": "Continue with Apple",
+    "googleLoginError": "Failed to authenticate with Google. Please try again or use another method."
   },
   "publishJourney": {
     "stepper": {
@@ -1202,7 +1205,8 @@ const esTranslations = {
     "continueButton": "Continuar",
     "socialLoginPrompt": "También puedes",
     "googleButton": "Continuar con Google",
-    "appleButton": "Continuar con Apple"
+    "appleButton": "Continuar con Apple",
+    "googleLoginError": "Error al autenticarse con Google. Por favor, inténtelo de nuevo o utilice otro método."
   },
   "publishJourney": {
     "stepper": {

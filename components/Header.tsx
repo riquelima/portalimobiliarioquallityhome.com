@@ -362,6 +362,16 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
                   )}
               </button>
               <hr className="my-2" />
+              <button
+                onClick={() => {
+                  onLogout();
+                  setIsMenuOpen(false);
+                }}
+                className="w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 p-3 text-lg"
+              >
+                <LogoutIcon className="w-6 h-6 mr-3 text-brand-gray" />
+                <span>{t('header.logout')}</span>
+              </button>
             </>
           )}
           
