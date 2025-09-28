@@ -1,6 +1,4 @@
 
-
-
 import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 
 // Translations are embedded directly to avoid module resolution issues.
@@ -466,6 +464,9 @@ const ptTranslations = {
     "fetchError": "Não foi possível carregar os anúncios. Por favor, tente recarregar a página.",
     "editSuccessMessage": "Anúncio atualizado com sucesso!",
     "errorDetails": "Detalhes do erro",
+    "logoutError": "Não foi possível encerrar a sessão. Por favor, tente novamente.",
+    "favoriteErrorAdd": "Não foi possível adicionar o imóvel aos favoritos. Tente novamente.",
+    "favoriteErrorRemove": "Não foi possível remover o imóvel dos favoritos. Tente novamente.",
     "corsError": {
       "title": "Ação Necessária: Problema de Conexão com o Servidor",
       "description": "O site não conseguiu se comunicar com o banco de dados. Isso geralmente é causado por uma configuração de segurança (CORS) que precisa ser ajustada no seu painel do Supabase.",
@@ -756,7 +757,7 @@ const enTranslations = {
       "aiDescriptionError": "Could not generate a description. Please check your connection or try again.",
       "apartmentCharacteristics": "Property characteristics",
       "landCharacteristics": "Land Characteristics",
-      "topography": "Topography",
+      "topografia": "Topography",
       "flat": "Flat",
       "uphill": "Uphill",
       "downhill": "Downhill",
@@ -981,6 +982,9 @@ const enTranslations = {
     "fetchError": "Could not load ads. Please try reloading the page.",
     "editSuccessMessage": "Ad updated successfully!",
     "errorDetails": "Error details",
+    "logoutError": "Could not sign out. Please try again.",
+    "favoriteErrorAdd": "Could not add property to favorites. Please try again.",
+    "favoriteErrorRemove": "Could not remove property from favorites. Please try again.",
     "corsError": {
       "title": "Action Required: Server Connection Issue",
       "description": "The website could not communicate with the database. This is usually caused by a security setting (CORS) that needs to be adjusted in your Supabase dashboard.",
@@ -1496,6 +1500,9 @@ const esTranslations = {
     "fetchError": "No se pudieron cargar los anuncios. Por favor, intenta recargar la página.",
     "editSuccessMessage": "¡Anuncio actualizado con éxito!",
     "errorDetails": "Detalles del error",
+    "logoutError": "No se pudo cerrar la sesión. Por favor, inténtelo de nuevo.",
+    "favoriteErrorAdd": "No se pudo añadir el inmueble a favoritos. Por favor, inténtelo de nuevo.",
+    "favoriteErrorRemove": "No se pudo quitar el inmueble de favoritos. Por favor, inténtelo de nuevo.",
     "corsError": {
       "title": "Acción Requerida: Problema de Conexión con el Servidor",
       "description": "El sitio web no pudo comunicarse con la base de datos. Esto generalmente es causado por una configuración de seguridad (CORS) que necesita ser ajustada en tu panel de Supabase.",

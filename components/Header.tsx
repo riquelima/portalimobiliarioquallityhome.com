@@ -344,7 +344,7 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
           <hr className="my-2" />
 
           {/* User links for mobile */}
-          {user && (
+          {user ? (
             <>
               <button onClick={() => { onNavigateToMyAds(); setIsMenuOpen(false); }} className="w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 p-3 text-lg">
                   <AdsIcon className="w-6 h-6 mr-3 text-brand-gray" />
@@ -373,6 +373,11 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
                 <span>{t('header.logout')}</span>
               </button>
             </>
+          ) : (
+            <button onClick={() => { onAccessClick(); setIsMenuOpen(false); }} className="w-full text-left flex items-center text-brand-dark hover:text-brand-red transition duration-300 p-3 text-lg">
+              <UserIcon className="w-6 h-6 mr-3 text-brand-gray" />
+              <span>{t('header.access')}</span>
+            </button>
           )}
           
           {/* Mobile Language Selector */}
@@ -408,7 +413,7 @@ const Header: React.FC<HeaderProps> = ({ navigateHome, onPublishAdClick, onAcces
         </div>
 
           <button 
-            onClick={onPublishAdClick}
+            onClick={() => { onPublishAdClick(); setIsMenuOpen(false); }}
             className="w-full text-center mt-4 px-4 py-3 bg-brand-red text-white rounded-md hover:opacity-90 transition duration-300 text-lg"
           >
             {t('header.publishAd')}

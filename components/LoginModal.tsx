@@ -1,6 +1,3 @@
-
-
-
 import React, { useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import CloseIcon from './icons/CloseIcon';
@@ -20,9 +17,10 @@ interface LoginModalProps {
 const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, loginIntent, showModal }) => {
   const { t } = useLanguage();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const handleGoogleLogin = async () => {
-    setIsSubmitting(true);
+    setIsGoogleLoading(true);
     localStorage.setItem('loginIntent', loginIntent);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -38,8 +36,12 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, loginIntent, s
         title: t('systemModal.errorTitle'),
         message: t('loginModal.googleLoginError')
       });
+      setIsGoogleLoading(false);
     }
-    setIsSubmitting(false);
+    // On successful redirect initiation, loading state is not turned off here
+    // as the page will reload. If the user closes the popup, the promise resolves,
+    // and we need to stop the loading state.
+    setTimeout(() => setIsGoogleLoading(false), 1000); // Failsafe to turn off spinner
   };
 
   return (
@@ -102,10 +104,10 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, loginIntent, s
         <div className="space-y-3">
            <button 
              onClick={handleGoogleLogin}
-             disabled={isSubmitting}
+             disabled={isGoogleLoading}
              className="w-full max-w-[300px] mx-auto flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-brand-dark hover:bg-gray-50 disabled:opacity-50 disabled:cursor-wait"
            >
-             {isSubmitting ? (
+             {isGoogleLoading ? (
                 <SpinnerIcon className="w-5 h-5 mr-3 animate-spin" />
              ) : (
                 <GoogleIcon className="w-5 h-5 mr-3" />

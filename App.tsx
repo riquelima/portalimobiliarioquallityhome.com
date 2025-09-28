@@ -1,6 +1,4 @@
 
-
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -440,6 +438,9 @@ const App: React.FC = () => {
         }
       } else {
         setProfile(null);
+        setFavorites([]);
+        setChatSessions([]);
+        setMyAds([]);
         sessionStorage.removeItem('quallityHomePageState');
       }
       
@@ -568,8 +569,24 @@ const App: React.FC = () => {
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
-    if (error) console.error('Error signing out:', error.message);
-    navigateHome();
+    if (error) {
+      console.error('Error signing out:', error.message);
+      showModal({
+        type: 'error',
+        title: t('systemModal.errorTitle'),
+        message: t('systemModal.logoutError'),
+      });
+    } else {
+      // Manually reset state in addition to relying on the auth listener.
+      // This provides a more immediate UI update and is more robust.
+      setUser(null);
+      setProfile(null);
+      setFavorites([]);
+      setChatSessions([]);
+      setMyAds([]);
+      sessionStorage.removeItem('quallityHomePageState');
+      navigateHome();
+    }
   };
 
   const toggleFavorite = async (propertyId: number) => {
@@ -577,15 +594,40 @@ const App: React.FC = () => {
       openLoginModal();
       return;
     }
+  
     const isCurrentlyFavorite = favorites.includes(propertyId);
+    const originalFavorites = [...favorites];
+  
+    // Optimistic UI update for instant feedback
+    if (isCurrentlyFavorite) {
+      setFavorites(prev => prev.filter(id => id !== propertyId));
+    } else {
+      setFavorites(prev => [...prev, propertyId]);
+    }
+  
+    // Perform database operation
     if (isCurrentlyFavorite) {
       const { error } = await supabase.from('favoritos_usuario').delete().match({ usuario_id: user.id, imovel_id: propertyId });
-      if (!error) setFavorites(prev => prev.filter(id => id !== propertyId));
-      else console.error("Error removing favorite:", error);
+      if (error) {
+        console.error("Error removing favorite:", error.message);
+        setFavorites(originalFavorites); // Rollback on error
+        showModal({
+          type: 'error',
+          title: t('systemModal.errorTitle'),
+          message: t('systemModal.favoriteErrorRemove'),
+        });
+      }
     } else {
       const { error } = await supabase.from('favoritos_usuario').insert({ usuario_id: user.id, imovel_id: propertyId });
-      if (!error) setFavorites(prev => [...prev, propertyId]);
-      else console.error("Error adding favorite:", error);
+      if (error) {
+        console.error("Error adding favorite:", error.message);
+        setFavorites(originalFavorites); // Rollback on error
+        showModal({
+          type: 'error',
+          title: t('systemModal.errorTitle'),
+          message: t('systemModal.favoriteErrorAdd'),
+        });
+      }
     }
   };
 
