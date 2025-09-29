@@ -590,26 +590,29 @@ const App: React.FC = () => {
   const openGeoErrorModal = () => setIsGeoErrorModalOpen(true);
   const closeGeoErrorModal = () => setIsGeoErrorModalOpen(false);
 
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Error signing out:', error.message);
-      showModal({
-        type: 'error',
-        title: t('systemModal.errorTitle'),
-        message: t('systemModal.logoutError'),
-      });
-    } else {
-      // Manually reset state in addition to relying on the auth listener.
-      // This provides a more immediate UI update and is more robust.
-      setUser(null);
-      setProfile(null);
-      setFavorites([]);
-      setChatSessions([]);
-      setMyAds([]);
-      sessionStorage.removeItem('quallityHomePageState');
-      navigateHome();
-    }
+  const handleLogout = () => {
+    // Optimistic update for immediate UI feedback.
+    setUser(null);
+    setProfile(null);
+    setFavorites([]);
+    setChatSessions([]);
+    setMyAds([]);
+    sessionStorage.removeItem('quallityHomePageState');
+    navigateHome();
+    
+    // Perform the sign out in the background.
+    supabase.auth.signOut().then(({ error }) => {
+      if (error) {
+        console.error('Error signing out:', error.message);
+        showModal({
+          type: 'error',
+          title: t('systemModal.errorTitle'),
+          message: t('systemModal.logoutError'),
+        });
+        // If sign-out fails, the onAuthStateChange listener will eventually
+        // correct the state by re-authenticating the user.
+      }
+    });
   };
 
   const toggleFavorite = async (propertyId: number) => {

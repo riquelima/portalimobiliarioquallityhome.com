@@ -1,11 +1,12 @@
 
+
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './Header';
 import PropertyListings from './PropertyListings';
 import type { Property, User, Profile } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import SearchIcon from './icons/SearchIcon';
-import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow, Autocomplete } from '@react-google-maps/api';
 
 interface AllListingsPageProps {
   onBack: () => void;
@@ -45,14 +46,24 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   
+  const [map, setMap] = useState<any | null>(null);
   const [mapCenter, setMapCenter] = useState<{lat: number, lng: number}>({lat: -12.9777, lng: -38.5016}); // Default to Salvador
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+  const [autocomplete, setAutocomplete] = useState<any | null>(null);
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script-all-listings',
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
     libraries,
   });
+  
+  const onLoad = useCallback(function callback(mapInstance: any) {
+    setMap(mapInstance);
+  }, []);
+
+  const onUnmount = useCallback(function callback() {
+    setMap(null);
+  }, []);
 
   useEffect(() => {
     if (props.deviceLocation) {
@@ -78,6 +89,34 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
   const onInfoWindowClose = useCallback(() => {
     setSelectedProperty(null);
   }, []);
+  
+  const onAutocompleteLoad = (autocompleteInstance: any) => {
+    setAutocomplete(autocompleteInstance);
+  };
+
+  const onPlaceChanged = () => {
+    if (autocomplete !== null) {
+        const place = autocomplete.getPlace();
+        if (place && place.formatted_address) {
+            const newQuery = place.formatted_address;
+            setSearchQuery(newQuery);
+            props.onSearchSubmit(newQuery);
+        }
+        if (place && place.geometry && place.geometry.location) {
+            const lat = place.geometry.location.lat();
+            const lng = place.geometry.location.lng();
+            const newCenter = { lat, lng };
+            setMapCenter(newCenter);
+            if (map) {
+                map.panTo(newCenter);
+                map.setZoom(15);
+            }
+        }
+    } else {
+        console.log('Autocomplete is not loaded yet!');
+    }
+  };
+
 
   return (
     <div className="bg-brand-light-gray min-h-screen flex flex-col">
@@ -91,14 +130,32 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
               <div className="relative flex flex-col sm:flex-row items-center gap-2">
                 <div className="relative flex-grow w-full">
                     <SearchIcon className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 z-10" />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={handleSearchInputChange}
-                      placeholder={t('hero.locationPlaceholder')}
-                      className="w-full px-12 py-3 rounded-full text-brand-dark border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-red"
-                      autoComplete="off"
-                    />
+                    {isLoaded ? (
+                      <Autocomplete
+                          onLoad={onAutocompleteLoad}
+                          onPlaceChanged={onPlaceChanged}
+                          options={{
+                            types: ['(regions)'],
+                            componentRestrictions: { country: 'br' },
+                          }}
+                      >
+                          <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={handleSearchInputChange}
+                            placeholder={t('hero.locationPlaceholder')}
+                            className="w-full px-12 py-3 rounded-full text-brand-dark border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-red"
+                            autoComplete="off"
+                          />
+                      </Autocomplete>
+                    ) : (
+                      <input
+                        type="text"
+                        placeholder={t('hero.locationPlaceholder')}
+                        className="w-full px-12 py-3 rounded-full text-brand-dark border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand-red"
+                        disabled
+                      />
+                    )}
                 </div>
                 <button 
                     type="submit"
@@ -122,6 +179,8 @@ const AllListingsPage: React.FC<AllListingsPageProps> = (props) => {
                         mapContainerStyle={containerStyle}
                         center={mapCenter}
                         zoom={13}
+                        onLoad={onLoad}
+                        onUnmount={onUnmount}
                         options={{
                             fullscreenControl: false,
                             streetViewControl: false,
